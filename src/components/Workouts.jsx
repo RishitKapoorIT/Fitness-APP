@@ -1,100 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../supabaseClient';
-import { Play, Pause, RotateCcw, CheckCircle, AlertCircle, Info, Heart, ArrowRight } from 'lucide-react';
 
-// Static base plan from original workout-chart.jsx
-const BASE_DAYS_PLAN = [
-  {
-    day: "MON", label: "Monday", type: "Cardio", color: "blue",
-    focus: "Walk + Jog Intervals", duration: "35 mins",
-    warmup: [
-      { name: "Slow Walk", detail: "5 min", timerSec: 300 },
-      { name: "Ankle Rotations", detail: "30 sec", timerSec: 30 },
-      { name: "Arm Swings", detail: "30 sec", timerSec: 30 },
-      { name: "Leg Swings", detail: "30 sec", timerSec: 30 },
-    ],
-    exercises: [
-      { name: "Walk (interval)", sets: "7×", reps: "3 min each", timerSec: 180, totalSets: 7, note: "Brisk pace", isInterval: true },
-      { name: "Jog (interval)", sets: "7×", reps: "1 min each", timerSec: 60, totalSets: 7, note: "Conversational pace", isInterval: true, highImpact: true },
-      { name: "Cool Down Walk", sets: "1×", reps: "5 min", timerSec: 300, totalSets: 1, note: "", isInterval: false },
-    ],
-    stretches: ["Calf Stretch", "Hamstring Stretch", "Quad Stretch"],
-  },
-  {
-    day: "TUE", label: "Tuesday", type: "Strength", color: "purple",
-    focus: "Strength + Recovery Walk", duration: "35–40 mins",
-    warmup: [{ name: "Brisk Walk", detail: "15–20 min", timerSec: 1080 }],
-    exercises: [
-      { name: "Bodyweight Squats", sets: "3", reps: "12", timerSec: null, totalSets: 3, note: "Keep heels flat" },
-      { name: "Calf Raises", sets: "3", reps: "20", timerSec: null, totalSets: 3, note: "Focus on calves" },
-      { name: "Glute Bridges", sets: "3", reps: "15", timerSec: null, totalSets: 3, note: "Squeeze glutes" },
-      { name: "Step-ups", sets: "3", reps: "10 each leg", timerSec: null, totalSets: 3, note: "Step on bench/stair" },
-      { name: "Wall Sit", sets: "3", reps: "30 sec", timerSec: 30, totalSets: 3, note: "Rest 45s between sets" },
-    ],
-    stretches: ["Calf Stretch", "Quad Stretch"],
-  },
-  {
-    day: "WED", label: "Wednesday", type: "Recovery", color: "emerald",
-    focus: "Active Recovery Walk", duration: "30 mins",
-    warmup: [],
-    exercises: [{ name: "Brisk Walk", sets: "1×", reps: "30 min", timerSec: 1800, totalSets: 1, note: "No running today" }],
-    stretches: ["Full Body Light Stretch", "Ankle Mobility Circles"],
-  },
-  {
-    day: "THU", label: "Thursday", type: "Cardio", color: "blue",
-    focus: "Walk + Jog Intervals", duration: "35 mins",
-    warmup: [
-      { name: "Slow Walk", detail: "5 min", timerSec: 300 },
-      { name: "Ankle Rotations", detail: "30 sec", timerSec: 30 },
-      { name: "Arm Swings", detail: "30 sec", timerSec: 30 },
-      { name: "Leg Swings", detail: "30 sec", timerSec: 30 },
-    ],
-    exercises: [
-      { name: "Walk (interval)", sets: "7×", reps: "3 min each", timerSec: 180, totalSets: 7, note: "Brisk pace", isInterval: true },
-      { name: "Jog (interval)", sets: "7×", reps: "1 min each", timerSec: 60, totalSets: 7, note: "Conversational pace", isInterval: true, highImpact: true },
-      { name: "Cool Down Walk", sets: "1×", reps: "5 min", timerSec: 300, totalSets: 1, note: "", isInterval: false },
-    ],
-    stretches: ["Calf Stretch", "Hamstring Stretch", "Quad Stretch"],
-  },
-  {
-    day: "FRI", label: "Friday", type: "Strength", color: "purple",
-    focus: "Strength + Core", duration: "40 mins",
-    warmup: [{ name: "Walking Warmup", detail: "5 min", timerSec: 300 }],
-    exercises: [
-      { name: "Squats", sets: "3", reps: "15", timerSec: null, totalSets: 3, note: "" },
-      { name: "Calf Raises", sets: "3", reps: "20", timerSec: null, totalSets: 3, note: "" },
-      { name: "Glute Bridges", sets: "3", reps: "15", timerSec: null, totalSets: 3, note: "" },
-      { name: "Lunges", sets: "3", reps: "8 each leg", timerSec: null, totalSets: 3, note: "" },
-      { name: "Wall Sit", sets: "3", reps: "40 sec", timerSec: 40, totalSets: 3, note: "" },
-      { name: "Plank", sets: "3", reps: "20–30 sec", timerSec: 25, totalSets: 3, note: "Core focus" },
-      { name: "Dead Bug", sets: "3", reps: "10 each side", timerSec: null, totalSets: 3, note: "Slow & controlled" },
-    ],
-    stretches: ["Calf Stretch", "Quad Stretch", "Hamstring Stretch"],
-  },
-  {
-    day: "SAT", label: "Saturday", type: "Fat Burn", color: "amber",
-    focus: "Long Easy Walk", duration: "40–50 mins",
-    warmup: [],
-    exercises: [{ name: "Easy Walk", sets: "1×", reps: "40–50 min", timerSec: 2700, totalSets: 1, note: "Steady, NOT fast" }],
-    stretches: ["Light Stretch"],
-  },
-  {
-    day: "SUN", label: "Sunday", type: "Rest", color: "slate",
-    focus: "Full Rest & Recovery", duration: "—",
-    warmup: [],
-    exercises: [{ name: "Rest & Recovery", sets: "—", reps: "All day", timerSec: null, totalSets: 0, note: "Recovery = progress" }],
-    stretches: [],
-  },
-];
-
-const BADGE_THEMES = {
-  Cardio: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
-  Strength: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20' },
-  Recovery: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
-  "Fat Burn": { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
-  Rest: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/20' },
-};
+import { BASE_DAYS_PLAN, BADGE_THEMES, getAdaptiveDayPlan } from '../utils/workoutPlanner';
+import { Play, Pause, RotateCcw, CheckCircle, AlertCircle, Info, Heart, ArrowRight, Minimize2, Maximize2, Calendar, ChevronRight } from 'lucide-react';
 
 export default function Workouts() {
   const { user, profile } = useAuth();
@@ -108,14 +17,15 @@ export default function Workouts() {
   
   const [activeTimerEx, setActiveTimerEx] = useState(null);
 
-  // Continuous Workout Player States
+  // Synchronized workout session states
   const [activePlayerSteps, setActivePlayerSteps] = useState(null);
   const [currentPlayerStepIdx, setCurrentPlayerStepIdx] = useState(0);
-  
-  // Stopwatch States
-  const [swSecs, setSwSecs] = useState(0);
-  const [swRunning, setSwRunning] = useState(false);
-  const stopwatchRef = useRef(null);
+  const [playerRunning, setPlayerRunning] = useState(false);
+  const [playerTimeLeft, setPlayerTimeLeft] = useState(0);
+  const [playerElapsed, setPlayerElapsed] = useState(0);
+  const [playerMinimized, setPlayerMinimized] = useState(false);
+
+  const playerTimerRef = useRef(null);
 
   // Recovery Log Fetching (to dynamically adjust current day's routine)
   const [recoveryScore, setRecoveryScore] = useState(null);
@@ -150,15 +60,109 @@ export default function Workouts() {
       });
   }, [user]);
 
-  // Session Stopwatch
-  useEffect(() => {
-    if (swRunning) {
-      stopwatchRef.current = setInterval(() => setSwSecs((s) => s + 1), 1000);
-    } else {
-      clearInterval(stopwatchRef.current);
+  const playBeep = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.frequency.value = 800;
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } catch (err) {
+      console.warn("Could not play audio beep:", err);
     }
-    return () => clearInterval(stopwatchRef.current);
-  }, [swRunning]);
+  };
+
+  // Synchronized Player Timer Effect
+  useEffect(() => {
+    if (playerTimerRef.current) clearInterval(playerTimerRef.current);
+    if (!activePlayerSteps) return;
+
+    const currentStep = activePlayerSteps[currentPlayerStepIdx];
+
+    if (playerRunning) {
+      playerTimerRef.current = setInterval(() => {
+        if (currentStep.timerSec > 0) {
+          setPlayerTimeLeft((prev) => {
+            if (prev <= 1) {
+              clearInterval(playerTimerRef.current);
+              playBeep();
+              // Go to next step automatically
+              if (currentPlayerStepIdx < activePlayerSteps.length - 1) {
+                const nextIdx = currentPlayerStepIdx + 1;
+                setCurrentPlayerStepIdx(nextIdx);
+                const nextStep = activePlayerSteps[nextIdx];
+                setPlayerTimeLeft(nextStep.timerSec || 0);
+                setPlayerElapsed(0);
+              } else {
+                setPlayerRunning(false);
+              }
+              return 0;
+            }
+            return prev - 1;
+          });
+        } else {
+          setPlayerElapsed((prev) => prev + 1);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (playerTimerRef.current) clearInterval(playerTimerRef.current);
+    };
+  }, [playerRunning, activePlayerSteps, currentPlayerStepIdx]);
+
+  // Session autoplay check from Dashboard redirection
+  useEffect(() => {
+    const autoPlay = sessionStorage.getItem('auto_play_workout');
+    if (autoPlay === 'true') {
+      sessionStorage.removeItem('auto_play_workout');
+      // Auto compile for today
+      const currentPlan = getAdaptiveDayPlan(BASE_DAYS_PLAN[dayIdx], profile, recoveryScore);
+      const steps = compileWorkoutSteps(currentPlan);
+      startWorkoutSession(steps);
+    }
+  }, [dayIdx, profile, recoveryScore]);
+
+  const startWorkoutSession = (steps) => {
+    setActivePlayerSteps(steps);
+    setCurrentPlayerStepIdx(0);
+    setPlayerRunning(true);
+    setPlayerTimeLeft(steps[0].timerSec || 0);
+    setPlayerElapsed(0);
+    setPlayerMinimized(false);
+  };
+
+  const stopWorkoutSession = () => {
+    setActivePlayerSteps(null);
+    setPlayerRunning(false);
+  };
+
+  const handleNextStep = () => {
+    if (!activePlayerSteps) return;
+    if (currentPlayerStepIdx < activePlayerSteps.length - 1) {
+      const nextIdx = currentPlayerStepIdx + 1;
+      setCurrentPlayerStepIdx(nextIdx);
+      setPlayerTimeLeft(activePlayerSteps[nextIdx].timerSec || 0);
+      setPlayerElapsed(0);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (!activePlayerSteps) return;
+    if (currentPlayerStepIdx > 0) {
+      const prevIdx = currentPlayerStepIdx - 1;
+      setCurrentPlayerStepIdx(prevIdx);
+      setPlayerTimeLeft(activePlayerSteps[prevIdx].timerSec || 0);
+      setPlayerElapsed(0);
+    }
+  };
 
   const formatStopwatch = (s) => {
     const m = Math.floor(s / 60);
@@ -166,135 +170,85 @@ export default function Workouts() {
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
-  // ADAPTIVE WORKOUT GENERATION ENGINE
-  const getAdaptiveDayPlan = (baseDay) => {
-    let dayCopy = JSON.parse(JSON.stringify(baseDay)); // Deep copy to prevent modifying static data
-    
-    // 1. Injury / Pain Adjustments
-    if (profile?.injuries && profile.injuries !== 'None') {
-      const injury = profile.injuries;
-
-      dayCopy.exercises = dayCopy.exercises.map((ex) => {
-        // High impact conversion
-        if (ex.highImpact && (injury === 'Shin/Calf Pain' || injury === 'Knee Pain' || injury === 'Ankle/Foot Pain' || injury === 'Hip/Groin Pain')) {
-          return {
-            ...ex,
-            name: "Brisk Walk (low-impact interval)",
-            note: `Substituted high-impact jog to protect your ${injury.replace(' Pain', '').toLowerCase()}`,
-            highImpact: false,
-            timerSec: ex.timerSec ? ex.timerSec + 60 : null
-          };
-        }
-
-        // Specific exercise substitutions based on pain type
-        if (ex.name === "Bodyweight Squats" || ex.name === "Squats") {
-          if (injury === 'Knee Pain') {
-            return { ...ex, name: "Quarter Squats (limited depth)", note: "Stop before 90 degrees to protect knee joint" };
-          }
-          if (injury === 'Lower Back Pain') {
-            return { ...ex, name: "Wall Sit", note: "Squats substituted to eliminate spinal pressure" };
-          }
-        }
-
-        if (ex.name === "Lunges") {
-          if (injury === 'Knee Pain' || injury === 'Hip/Groin Pain') {
-            return { ...ex, name: "Glute Bridges (strength alternative)", note: "Substituted lunges to prevent knee/hip strain" };
-          }
-        }
-
-        if (ex.name === "Push-ups" || ex.name === "Plank") {
-          if (injury === 'Elbow/Wrist Pain') {
-            return { ...ex, name: "Plank (on forearms)", note: "Substituted to avoid wrist hyperextension" };
-          }
-          if (injury === 'Shoulder Pain') {
-            return { ...ex, name: "Glute Bridges (core substitute)", note: "Substituted to protect rotator cuff" };
-          }
-        }
-
-        return ex;
-      });
-
-      // Insert target warmup stretches depending on injury
-      if (dayCopy.warmup.length > 0) {
-        if (injury === 'Shin/Calf Pain' || injury === 'Ankle/Foot Pain') {
-          dayCopy.warmup.push({ name: "Ankle Rotations & Calf Stretches", detail: "60 sec", timerSec: 60 });
-        } else if (injury === 'Lower Back Pain') {
-          dayCopy.warmup.push({ name: "Cat-Cow Stretch", detail: "60 sec", timerSec: 60 });
-        } else if (injury === 'Knee Pain') {
-          dayCopy.warmup.push({ name: "Quad stretches (supported)", detail: "60 sec", timerSec: 60 });
-        } else if (injury === 'Shoulder Pain') {
-          dayCopy.warmup.push({ name: "Shoulder rotations & arm swings", detail: "60 sec", timerSec: 60 });
-        }
-      }
-    }
-
-    // 2. Recovery Score Adjustments (Red / Yellow / Green Zones)
-    if (recoveryScore !== null) {
-      if (recoveryScore < 40) {
-        // RED ZONE: Switch entire workout to Recovery/Rest Day
-        dayCopy.type = "Rest";
-        dayCopy.focus = "Rest & Mobility Recovery";
-        dayCopy.duration = "15 mins";
-        dayCopy.warmup = [];
-        dayCopy.exercises = [
-          { name: "Active Rest & Hydration", sets: "—", reps: "All Day", note: "Let muscle tissue repair" },
-          { name: "Foam Roll / Massage", sets: "1×", reps: "5 min", timerSec: 300 }
-        ];
-        dayCopy.stretches = ["Calf Stretch", "Gentle Leg Swings", "Wall Calf Hold"];
-      } else if (recoveryScore >= 40 && recoveryScore < 75) {
-        // YELLOW ZONE: Fatigue. Scale back sets and intervals by 30-40%
-        dayCopy.focus = `${dayCopy.focus} (Reduced Volume)`;
-        dayCopy.exercises = dayCopy.exercises.map((ex) => {
-          if (ex.totalSets > 1) {
-            const adjustedSets = Math.max(1, Math.round(ex.totalSets * 0.6));
-            return {
-              ...ex,
-              sets: `${adjustedSets}×`,
-              totalSets: adjustedSets,
-              note: `${ex.note ? ex.note + ' · ' : ''}Scaled down due to moderate recovery score (${recoveryScore}%)`
-            };
-          }
-          return ex;
-        });
-      }
-    }
-
-    return dayCopy;
-  };
-
-  const d = getAdaptiveDayPlan(BASE_DAYS_PLAN[dayIdx]);
+  const d = getAdaptiveDayPlan(BASE_DAYS_PLAN[dayIdx], profile, recoveryScore);
   const badgeTheme = BADGE_THEMES[d.type] || BADGE_THEMES.Rest;
 
   return (
     <div className="space-y-6 page-fade-in text-left">
       
-      {/* Session Timer Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex items-center justify-between shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className={`h-11 w-11 rounded-2xl flex items-center justify-center text-lg ${swRunning ? 'bg-blue-500/10 text-blue-500 animate-pulse' : 'bg-slate-950 text-slate-500'}`}>
-            <Play className="h-4.5 w-4.5 text-blue-500" />
+      {/* ─── WORKOUT INTERVAL ROUTINE PLAYER CONTROL WIDGET ─── */}
+      {activePlayerSteps ? (
+        <div className="bg-gradient-to-r from-blue-950/40 to-slate-900 border border-blue-900/30 rounded-3xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className={`h-11 w-11 rounded-2xl flex items-center justify-center text-lg ${playerRunning ? 'bg-blue-500/10 text-blue-400 animate-pulse' : 'bg-slate-950 text-slate-500'}`}>
+              <Play className="h-4.5 w-4.5 text-blue-500 fill-current" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Active Session: {activePlayerSteps[currentPlayerStepIdx].section}</div>
+              <div className="text-base font-extrabold text-slate-200 mt-0.5">{activePlayerSteps[currentPlayerStepIdx].name}</div>
+              <p className="text-[11px] text-slate-400">{activePlayerSteps[currentPlayerStepIdx].note}</p>
+            </div>
           </div>
-          <div>
-            <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Session Stopwatch</div>
-            <div className="text-3xl font-black font-mono tracking-tight text-slate-100">{formatStopwatch(swSecs)}</div>
-          </div>
-        </div>
 
-        <div className="flex gap-2">
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Time Remaining</div>
+              <div className="text-2xl font-black font-mono text-slate-100">
+                {activePlayerSteps[currentPlayerStepIdx].timerSec > 0 
+                  ? formatStopwatch(playerTimeLeft) 
+                  : formatStopwatch(playerElapsed)}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPlayerRunning(!playerRunning)}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${playerRunning ? 'bg-amber-600/10 text-amber-500 border border-amber-500/20' : 'bg-blue-600 text-white shadow-blue-500/10'}`}
+              >
+                {playerRunning ? 'Pause' : 'Resume'}
+              </button>
+              <button
+                onClick={handleNextStep}
+                disabled={currentPlayerStepIdx === activePlayerSteps.length - 1}
+                className="bg-slate-950 hover:bg-slate-850 border border-slate-800 disabled:opacity-45 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
+              >
+                Skip
+              </button>
+              <button
+                onClick={() => setPlayerMinimized(false)}
+                className="bg-blue-600/15 border border-blue-500/20 hover:bg-blue-600/25 px-3.5 py-2.5 rounded-xl text-xs font-bold text-blue-400 transition-all cursor-pointer flex items-center gap-1"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+                Maximize
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-2xl bg-slate-950 flex items-center justify-center text-slate-500">
+              <Calendar className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Workout Session Player</div>
+              <div className="text-base font-extrabold text-slate-200 mt-0.5">Ready to start today's routine?</div>
+              <p className="text-[11px] text-slate-400">Play the routine to track your walk/jog intervals and rest periods automatically.</p>
+            </div>
+          </div>
+
           <button
-            onClick={() => setSwRunning(!swRunning)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${swRunning ? 'bg-amber-600/10 text-amber-500 border border-amber-500/20' : 'bg-blue-600 text-white shadow-blue-500/10'}`}
+            onClick={() => {
+              const steps = compileWorkoutSteps(d);
+              startWorkoutSession(steps);
+            }}
+            className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 px-5 rounded-2xl transition-all shadow-md uppercase tracking-wider flex items-center gap-2 justify-center cursor-pointer"
           >
-            {swRunning ? 'Pause' : 'Start Timer'}
-          </button>
-          <button
-            onClick={() => { setSwRunning(false); setSwSecs(0); }}
-            className="p-2.5 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl border border-slate-850 transition-colors cursor-pointer"
-          >
-            <RotateCcw className="h-4 w-4" />
+            <Play className="h-3.5 w-3.5 fill-current" />
+            Start Routine Player
           </button>
         </div>
-      </div>
+      )}
 
       {/* Week Day Pills Selector */}
       <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-none">
@@ -326,8 +280,7 @@ export default function Workouts() {
               <button
                 onClick={() => {
                   const steps = compileWorkoutSteps(d);
-                  setActivePlayerSteps(steps);
-                  setCurrentPlayerStepIdx(0);
+                  startWorkoutSession(steps);
                 }}
                 className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
               >
@@ -464,12 +417,18 @@ export default function Workouts() {
       )}
 
       {/* CONTINUOUS WORKOUT SESSION PLAYER */}
-      {activePlayerSteps && (
+      {activePlayerSteps && !playerMinimized && (
         <WorkoutPlayerModal
           steps={activePlayerSteps}
           activeIdx={currentPlayerStepIdx}
-          setActiveIdx={setCurrentPlayerStepIdx}
-          onClose={() => setActivePlayerSteps(null)}
+          handleNext={handleNextStep}
+          handlePrev={handlePrevStep}
+          onClose={stopWorkoutSession}
+          onMinimize={() => setPlayerMinimized(true)}
+          isRunning={playerRunning}
+          setIsRunning={setPlayerRunning}
+          timeLeft={playerTimeLeft}
+          elapsed={playerElapsed}
         />
       )}
 
@@ -853,82 +812,23 @@ const compileWorkoutSteps = (dayPlan) => {
   return steps;
 };
 
-function WorkoutPlayerModal({ steps, activeIdx, setActiveIdx, onClose }) {
+function WorkoutPlayerModal({
+  steps,
+  activeIdx,
+  handleNext,
+  handlePrev,
+  onClose,
+  onMinimize,
+  isRunning,
+  setIsRunning,
+  timeLeft,
+  elapsed
+}) {
   const step = steps[activeIdx];
   const total = steps.length;
   
-  const [isRunning, setIsRunning] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(step.timerSec || 0);
-  const [elapsed, setElapsed] = useState(0);
-  
-  const timerRef = useRef(null);
-
-  const playBeep = () => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.frequency.value = 800;
-      gain.gain.setValueAtTime(0.1, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-      
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
-    } catch (err) {
-      console.warn("Could not play audio beep:", err);
-    }
-  };
-
-  useEffect(() => {
-    setTimeLeft(step.timerSec || 0);
-    setElapsed(0);
-    setIsRunning(true);
-  }, [activeIdx, step]);
-
-  useEffect(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    
-    if (isRunning) {
-      timerRef.current = setInterval(() => {
-        if (step.timerSec > 0) {
-          setTimeLeft((prev) => {
-            if (prev <= 1) {
-              clearInterval(timerRef.current);
-              playBeep();
-              if (activeIdx < total - 1) {
-                setActiveIdx((idx) => idx + 1);
-              } else {
-                setIsRunning(false);
-              }
-              return 0;
-            }
-            return prev - 1;
-          });
-        } else {
-          setElapsed((prev) => prev + 1);
-        }
-      }, 1000);
-    }
-    
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isRunning, activeIdx, step, total, setActiveIdx]);
-
-  const handleNext = () => {
-    if (activeIdx < total - 1) {
-      setActiveIdx((idx) => idx + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (activeIdx > 0) {
-      setActiveIdx((idx) => idx - 1);
-    }
-  };
+  const progressPercent = ((activeIdx + 1) / total) * 100;
+  const nextStep = activeIdx < total - 1 ? steps[activeIdx + 1] : null;
 
   const formatTime = (s) => {
     const mins = Math.floor(s / 60);
@@ -936,12 +836,9 @@ function WorkoutPlayerModal({ steps, activeIdx, setActiveIdx, onClose }) {
     return `${mins}:${String(secs).padStart(2, '0')}`;
   };
 
-  const progressPercent = ((activeIdx + 1) / total) * 100;
-  const nextStep = activeIdx < total - 1 ? steps[activeIdx + 1] : null;
-
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative text-left">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative text-left page-fade-in">
         
         {/* Top Header */}
         <div className="flex justify-between items-center pb-2">
@@ -950,12 +847,21 @@ function WorkoutPlayerModal({ steps, activeIdx, setActiveIdx, onClose }) {
               {step.section}
             </span>
           </div>
-          <button 
-            onClick={onClose}
-            className="text-slate-400 hover:text-white font-bold text-sm bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-850 cursor-pointer"
-          >
-            ✕ Quit
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={onMinimize}
+              className="text-blue-400 hover:text-white font-bold text-xs bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-850 cursor-pointer flex items-center gap-1 transition-all"
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+              Minimize
+            </button>
+            <button 
+              onClick={onClose}
+              className="text-red-400 hover:text-white font-bold text-xs bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-850 cursor-pointer transition-all"
+            >
+              ✕ Quit
+            </button>
+          </div>
         </div>
 
         {/* Progress Bar */}
@@ -974,11 +880,11 @@ function WorkoutPlayerModal({ steps, activeIdx, setActiveIdx, onClose }) {
 
         {/* Content Body */}
         <div className="py-6 flex flex-col items-center justify-center text-center space-y-4">
-          <h2 className="text-3xl font-black text-slate-100 leading-tight">
+          <h2 className="text-2xl md:text-3xl font-black text-slate-100 leading-tight">
             {step.name}
           </h2>
           
-          <p className="text-xs text-slate-400 font-semibold max-w-sm">
+          <p className="text-xs text-slate-400 font-semibold max-w-sm leading-relaxed">
             {step.note}
           </p>
 
@@ -996,7 +902,7 @@ function WorkoutPlayerModal({ steps, activeIdx, setActiveIdx, onClose }) {
                     stroke={step.isRest ? "#10b981" : "#3b82f6"}
                     strokeWidth="4"
                     strokeDasharray={282}
-                    strokeDashoffset={282 - (282 * timeLeft) / step.timerSec}
+                    strokeDashoffset={282 - (282 * (timeLeft / step.timerSec))}
                     strokeLinecap="round"
                     className="transition-all duration-100"
                   />
@@ -1021,7 +927,7 @@ function WorkoutPlayerModal({ steps, activeIdx, setActiveIdx, onClose }) {
             <button
               onClick={handlePrev}
               disabled={activeIdx === 0}
-              className="bg-slate-950 hover:bg-slate-800 border border-slate-850 py-3 rounded-2xl text-xs font-bold text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer flex items-center justify-center gap-1"
+              className="bg-slate-950 hover:bg-slate-850 border border-slate-850 py-3 rounded-2xl text-xs font-bold text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer flex items-center justify-center gap-1"
             >
               ← Prev
             </button>
@@ -1040,7 +946,7 @@ function WorkoutPlayerModal({ steps, activeIdx, setActiveIdx, onClose }) {
             <button
               onClick={handleNext}
               disabled={activeIdx === total - 1}
-              className="bg-slate-950 hover:bg-slate-800 border border-slate-850 py-3 rounded-2xl text-xs font-bold text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer flex items-center justify-center gap-1"
+              className="bg-slate-950 hover:bg-slate-850 border border-slate-850 py-3 rounded-2xl text-xs font-bold text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer flex items-center justify-center gap-1"
             >
               Next →
             </button>

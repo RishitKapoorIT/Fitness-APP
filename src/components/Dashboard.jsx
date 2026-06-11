@@ -133,6 +133,16 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
     loadData();
   }, [user?.id, todayStr]);
 
+  // Sync recovery input fields when today's record updates or loads
+  useEffect(() => {
+    if (todayRecovery) {
+      setSleepHours(String(todayRecovery.sleep_hours ?? 8));
+      setSoreness(String(todayRecovery.soreness_level ?? 0));
+      setEnergy(String(todayRecovery.energy_level ?? 4));
+      setNotes(todayRecovery.notes ?? '');
+    }
+  }, [todayRecovery]);
+
   // Handle Recovery Check-In
   const handleRecoverySubmit = async (e) => {
     e.preventDefault();
@@ -534,9 +544,9 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
               </div>
               <button
                 onClick={() => addWater(-0.25)}
-                className="w-full bg-slate-950/40 dark:bg-slate-950/40 hover:bg-red-500/10 border border-slate-850 hover:border-red-500/20 py-2.5 rounded-xl text-[10px] font-semibold text-slate-400 hover:text-red-400 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full bg-rose-950/15 hover:bg-rose-950/25 border border-rose-900/30 hover:border-rose-500/40 py-2.5 rounded-xl text-xs font-bold text-rose-450 hover:text-rose-300 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
               >
-                <Undo className="h-3.5 w-3.5" />
+                <Undo className="h-4 w-4 text-rose-400" />
                 Accidentally Added? Remove 250ml
               </button>
             </div>
