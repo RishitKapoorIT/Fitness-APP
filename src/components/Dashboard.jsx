@@ -103,8 +103,24 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         if (recData) setTodayRecovery(recData);
         else if (userLocalLogs.recovery[todayStr]) setTodayRecovery(userLocalLogs.recovery[todayStr]);
 
-        if (waterData) setTodayWater(waterData.amount_liters);
-        else if (userLocalLogs.water[todayStr]) setTodayWater(userLocalLogs.water[todayStr]);
+        let finalWater = 0.0;
+        if (waterData) {
+          const dbAmt = waterData.amount_liters;
+          const localAmt = userLocalLogs.water[todayStr] || 0.0;
+          finalWater = Math.max(dbAmt, localAmt);
+          setTodayWater(finalWater);
+          if (finalWater > dbAmt) {
+            supabase
+              .from('water_logs')
+              .upsert({ user_id: user.id, date: todayStr, amount_liters: finalWater }, { onConflict: 'user_id,date' })
+              .catch(console.error);
+          }
+        } else if (userLocalLogs.water[todayStr]) {
+          finalWater = userLocalLogs.water[todayStr];
+          setTodayWater(finalWater);
+        } else {
+          setTodayWater(0.0);
+        }
 
         if (wtData && wtData.length > 0) {
           setWeightHistory(wtData.map(w => ({ date: w.date, weight: w.weight_kg })));
@@ -115,7 +131,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         // Sync local logs with what we fetched from Supabase
         const updatedLogs = { ...userLocalLogs };
         if (recData) updatedLogs.recovery[todayStr] = recData;
-        if (waterData) updatedLogs.water[todayStr] = waterData.amount_liters;
+        updatedLogs.water[todayStr] = finalWater;
         if (wtData && wtData.length > 0) {
           updatedLogs.weight = wtData.map(w => ({ date: w.date, weight: w.weight_kg }));
         }
