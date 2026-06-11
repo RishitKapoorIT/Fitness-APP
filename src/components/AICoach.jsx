@@ -59,7 +59,7 @@ export default function AICoach() {
           ...prev,
           {
             sender: 'coach',
-            text: "⚠️ **Gemini API Key is not configured yet.** Please add your `VITE_GEMINI_API_KEY` to the `.env` file in your project directory to activate real-time Gemini AI coaching. \n\n*Note for Rishit: Ensure your key is from Google AI Studio.*"
+            text: "**Gemini API Key is not configured yet.** Please add your `VITE_GEMINI_API_KEY` to the `.env` file in your project directory to activate real-time Gemini AI coaching. \n\n*Note for Rishit: Ensure your key is from Google AI Studio.*"
           }
         ]);
         setLoading(false);
@@ -79,17 +79,16 @@ export default function AICoach() {
       3. CRITICAL: If they describe sharp bone pain or intense pain, advise them to immediately stop and seek medical evaluation. Do not give official medical diagnoses, but prioritize safety.
       4. Keep answers relatively concise and highly actionable. Use bullet points for exercise adjustments.`;
 
-      // Construct messages array for Gemini API (role conversation)
-      const apiMessages = [
-        {
-          role: 'user',
-          parts: [{ text: systemPrompt }]
-        },
-        ...updatedMessages.map((m) => ({
-          role: m.sender === 'user' ? 'user' : 'model',
-          parts: [{ text: m.text }]
-        }))
-      ];
+      // Filter messages history so it starts with a user turn and contains alternating roles
+      const userStartedHistory = updatedMessages.filter((m, idx) => {
+        if (idx === 0 && m.sender === 'coach') return false;
+        return true;
+      });
+
+      const apiMessages = userStartedHistory.map((m) => ({
+        role: m.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }]
+      }));
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
@@ -99,7 +98,10 @@ export default function AICoach() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            contents: apiMessages
+            contents: apiMessages,
+            systemInstruction: {
+              parts: [{ text: systemPrompt }]
+            }
           })
         }
       );
@@ -175,9 +177,10 @@ export default function AICoach() {
                   key={idx}
                   onClick={() => handleSendMessage(q)}
                   disabled={loading}
-                  className="w-full text-left p-3 bg-slate-950 hover:bg-slate-850 text-slate-400 hover:text-slate-200 text-xs rounded-xl border border-slate-850/50 transition-all cursor-pointer font-medium"
+                  className="w-full text-left p-3 bg-slate-950 hover:bg-slate-850 text-slate-400 hover:text-slate-200 text-xs rounded-xl border border-slate-850/50 transition-all cursor-pointer font-medium flex items-center gap-2"
                 >
-                  💬 {q}
+                  <MessageSquare className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                  <span>{q}</span>
                 </button>
               ))}
             </div>
@@ -197,7 +200,7 @@ export default function AICoach() {
         {/* Chat Header */}
         <div className="p-4 bg-slate-950 border-b border-slate-850 flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-            🤖
+            <MessageSquare className="h-4 w-4" />
           </div>
           <div>
             <h4 className="text-xs font-bold text-slate-200">Coach Gemini</h4>

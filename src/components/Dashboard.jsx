@@ -68,6 +68,14 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
     if (!user) return;
 
     const loadData = async () => {
+      let userLocalLogs = { recovery: {}, water: {}, weight: [] };
+      try {
+        const saved = localStorage.getItem(`fitness_logs_${user.id}`);
+        if (saved) userLocalLogs = JSON.parse(saved);
+      } catch (err) {
+        console.warn('Could not read user local logs:', err);
+      }
+
       // Try fetching from Supabase if connected, otherwise fallback to LocalStorage
       try {
         const { data: recData } = await supabase
@@ -92,26 +100,26 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
           .limit(10);
 
         if (recData) setTodayRecovery(recData);
-        else if (localLogs.recovery[todayStr]) setTodayRecovery(localLogs.recovery[todayStr]);
+        else if (userLocalLogs.recovery[todayStr]) setTodayRecovery(userLocalLogs.recovery[todayStr]);
 
         if (waterData) setTodayWater(waterData.amount_liters);
-        else if (localLogs.water[todayStr]) setTodayWater(localLogs.water[todayStr]);
+        else if (userLocalLogs.water[todayStr]) setTodayWater(userLocalLogs.water[todayStr]);
 
         if (wtData && wtData.length > 0) {
           setWeightHistory(wtData.map(w => ({ date: w.date, weight: w.weight_kg })));
         } else {
-          setWeightHistory(localLogs.weight);
+          setWeightHistory(userLocalLogs.weight || []);
         }
       } catch (err) {
         console.warn('Using LocalStorage fallback for Dashboard:', err);
-        if (localLogs.recovery[todayStr]) setTodayRecovery(localLogs.recovery[todayStr]);
-        if (localLogs.water[todayStr]) setTodayWater(localLogs.water[todayStr]);
-        setWeightHistory(localLogs.weight);
+        if (userLocalLogs.recovery[todayStr]) setTodayRecovery(userLocalLogs.recovery[todayStr]);
+        if (userLocalLogs.water[todayStr]) setTodayWater(userLocalLogs.water[todayStr]);
+        setWeightHistory(userLocalLogs.weight || []);
       }
     };
 
     loadData();
-  }, [user, localLogs, todayStr]);
+  }, [user?.id, todayStr]);
 
   // Handle Recovery Check-In
   const handleRecoverySubmit = async (e) => {
@@ -280,14 +288,22 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
             Log Morning Recovery
           </button>
         ) : (
-          <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl border ${recoveryZone.bg} ${recoveryZone.border} relative z-10`}>
-            <div className="h-10 w-10 rounded-xl bg-slate-950 flex items-center justify-center font-black text-lg text-white">
-              {todayRecovery.recovery_score}
+          <div className="flex items-center gap-2 relative z-10">
+            <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl border ${recoveryZone.bg} ${recoveryZone.border}`}>
+              <div className="h-10 w-10 rounded-xl bg-slate-950 flex items-center justify-center font-black text-lg text-white">
+                {todayRecovery.recovery_score}
+              </div>
+              <div>
+                <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Recovery Readiness</div>
+                <div className={`text-xs font-bold ${recoveryZone.color}`}>{recoveryZone.label}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Recovery Readiness</div>
-              <div className={`text-xs font-bold ${recoveryZone.color}`}>{recoveryZone.label}</div>
-            </div>
+            <button
+              onClick={() => setShowRecoveryModal(true)}
+              className="px-3.5 py-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-2xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md"
+            >
+              Update
+            </button>
           </div>
         )}
       </div>
@@ -384,11 +400,11 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
                 </span>
               </div>
 
-              {profile?.injuries === 'Shin/Calf Pain' && (
+              {profile?.injuries && profile.injuries !== 'None' && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-start gap-2.5">
                   <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                   <p className="leading-relaxed">
-                    <strong>Shin/Calf Pain Active</strong>: We have swapped high-impact running intervals with brisk walking, mobility rotations, and standing calf raises to protect your shins.
+                    <strong>{profile.injuries} Active</strong>: Your active workout plan has adapted automatically to swap out high-impact or aggravating strain vectors for safe training.
                   </p>
                 </div>
               )}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { ftInToCm, lbsToKg } from '../utils/healthCalculators';
+import { Activity, AlertTriangle } from 'lucide-react';
 
 export default function Auth() {
   const { signIn, signUp } = useAuth();
@@ -99,8 +100,8 @@ export default function Auth() {
         
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white text-xl font-bold shadow-lg shadow-blue-500/20">
-            💪
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20">
+            <Activity className="h-5 w-5" />
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
             Fitness Hub
@@ -113,7 +114,7 @@ export default function Auth() {
         {/* Error Alert */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-xs flex items-center gap-2">
-            <span>⚠️</span>
+            <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
             <span>{error}</span>
           </div>
         )}
@@ -193,14 +194,14 @@ export default function Auth() {
                     onClick={() => setUnitSystem('metric')}
                     className={`px-3 py-1 text-[11px] rounded-md font-bold transition-all ${unitSystem === 'metric' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
                   >
-                    🇮🇳 India (Metric)
+                    India (Metric)
                   </button>
                   <button
                     type="button"
                     onClick={() => setUnitSystem('imperial')}
                     className={`px-3 py-1 text-[11px] rounded-md font-bold transition-all ${unitSystem === 'imperial' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
                   >
-                    🇺🇸 USA (Imperial)
+                    USA (Imperial)
                   </button>
                 </div>
               </div>
@@ -313,6 +314,10 @@ export default function Auth() {
                   <option value="Knee Pain">Knee Pain</option>
                   <option value="Lower Back Pain">Lower Back Pain</option>
                   <option value="Shoulder Pain">Shoulder Pain</option>
+                  <option value="Ankle/Foot Pain">Ankle / Foot Pain</option>
+                  <option value="Elbow/Wrist Pain">Elbow / Wrist Pain</option>
+                  <option value="Hip/Groin Pain">Hip / Groin Pain</option>
+                  <option value="Neck/Upper Back Pain">Neck / Upper Back Pain</option>
                   <option value="None">None - Fit & Pain-Free</option>
                 </select>
               </div>

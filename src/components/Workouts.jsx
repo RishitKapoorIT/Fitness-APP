@@ -98,7 +98,14 @@ const BADGE_THEMES = {
 
 export default function Workouts() {
   const { user, profile } = useAuth();
-  const [dayIdx, setDayIdx] = useState(0);
+  
+  // Set default tab to today's actual day of the week
+  const [dayIdx, setDayIdx] = useState(() => {
+    const day = new Date().getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const map = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
+    return map[day] !== undefined ? map[day] : 0;
+  });
+  
   const [activeTimerEx, setActiveTimerEx] = useState(null);
   
   // Stopwatch States
@@ -159,26 +166,61 @@ export default function Workouts() {
   const getAdaptiveDayPlan = (baseDay) => {
     let dayCopy = JSON.parse(JSON.stringify(baseDay)); // Deep copy to prevent modifying static data
     
-    // 1. Injury Adjustments (e.g. Calf/Shin Pain)
-    if (profile?.injuries === 'Shin/Calf Pain') {
+    // 1. Injury / Pain Adjustments
+    if (profile?.injuries && profile.injuries !== 'None') {
+      const injury = profile.injuries;
+
       dayCopy.exercises = dayCopy.exercises.map((ex) => {
-        if (ex.highImpact) {
-          // Replace Jogging with low impact walking intervals & extra calf protection
+        // High impact conversion
+        if (ex.highImpact && (injury === 'Shin/Calf Pain' || injury === 'Knee Pain' || injury === 'Ankle/Foot Pain' || injury === 'Hip/Groin Pain')) {
           return {
             ...ex,
             name: "Brisk Walk (low-impact interval)",
-            note: "Substituted high-impact jog to prevent calf splints",
+            note: `Substituted high-impact jog to protect your ${injury.replace(' Pain', '').toLowerCase()}`,
             highImpact: false,
-            timerSec: ex.timerSec + 60 // extend walk time since impact is reduced
+            timerSec: ex.timerSec ? ex.timerSec + 60 : null
           };
         }
+
+        // Specific exercise substitutions based on pain type
+        if (ex.name === "Bodyweight Squats" || ex.name === "Squats") {
+          if (injury === 'Knee Pain') {
+            return { ...ex, name: "Quarter Squats (limited depth)", note: "Stop before 90 degrees to protect knee joint" };
+          }
+          if (injury === 'Lower Back Pain') {
+            return { ...ex, name: "Wall Sit", note: "Squats substituted to eliminate spinal pressure" };
+          }
+        }
+
+        if (ex.name === "Lunges") {
+          if (injury === 'Knee Pain' || injury === 'Hip/Groin Pain') {
+            return { ...ex, name: "Glute Bridges (strength alternative)", note: "Substituted lunges to prevent knee/hip strain" };
+          }
+        }
+
+        if (ex.name === "Push-ups" || ex.name === "Plank") {
+          if (injury === 'Elbow/Wrist Pain') {
+            return { ...ex, name: "Plank (on forearms)", note: "Substituted to avoid wrist hyperextension" };
+          }
+          if (injury === 'Shoulder Pain') {
+            return { ...ex, name: "Glute Bridges (core substitute)", note: "Substituted to protect rotator cuff" };
+          }
+        }
+
         return ex;
       });
 
-      // Insert extra calf mobility warmup if missing
-      const hasCalfWarmup = dayCopy.warmup.some(w => w.name.includes("Calf") || w.name.includes("Ankle"));
-      if (dayCopy.warmup.length > 0 && !hasCalfWarmup) {
-        dayCopy.warmup.push({ name: "Gentle Calf Stretching", detail: "30 sec", timerSec: 30 });
+      // Insert target warmup stretches depending on injury
+      if (dayCopy.warmup.length > 0) {
+        if (injury === 'Shin/Calf Pain' || injury === 'Ankle/Foot Pain') {
+          dayCopy.warmup.push({ name: "Ankle Rotations & Calf Stretches", detail: "60 sec", timerSec: 60 });
+        } else if (injury === 'Lower Back Pain') {
+          dayCopy.warmup.push({ name: "Cat-Cow Stretch", detail: "60 sec", timerSec: 60 });
+        } else if (injury === 'Knee Pain') {
+          dayCopy.warmup.push({ name: "Quad stretches (supported)", detail: "60 sec", timerSec: 60 });
+        } else if (injury === 'Shoulder Pain') {
+          dayCopy.warmup.push({ name: "Shoulder rotations & arm swings", detail: "60 sec", timerSec: 60 });
+        }
       }
     }
 
@@ -192,7 +234,7 @@ export default function Workouts() {
         dayCopy.warmup = [];
         dayCopy.exercises = [
           { name: "Active Rest & Hydration", sets: "—", reps: "All Day", note: "Let muscle tissue repair" },
-          { name: "Foam Roll / Calf Massage", sets: "1×", reps: "5 min", timerSec: 300 }
+          { name: "Foam Roll / Massage", sets: "1×", reps: "5 min", timerSec: 300 }
         ];
         dayCopy.stretches = ["Calf Stretch", "Gentle Leg Swings", "Wall Calf Hold"];
       } else if (recoveryScore >= 40 && recoveryScore < 75) {
@@ -226,7 +268,7 @@ export default function Workouts() {
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
           <div className={`h-11 w-11 rounded-2xl flex items-center justify-center text-lg ${swRunning ? 'bg-blue-500/10 text-blue-500 animate-pulse' : 'bg-slate-950 text-slate-500'}`}>
-            ⏱️
+            <Play className="h-4.5 w-4.5 text-blue-500" />
           </div>
           <div>
             <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Session Stopwatch</div>
@@ -289,11 +331,43 @@ export default function Workouts() {
 
         {/* Exercises List */}
         <div className="p-6 space-y-6">
+
+          {/* Active Personalization Adaptations Alert Box */}
+          {((profile?.injuries && profile.injuries !== 'None') || (recoveryScore !== null && recoveryScore < 75)) ? (
+            <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl space-y-2 text-xs">
+              <div className="flex items-center gap-2 font-bold text-indigo-400">
+                <Heart className="h-3.5 w-3.5" />
+                <span>Active Adaptations</span>
+              </div>
+              <ul className="space-y-1.5 text-slate-400 font-medium pl-5 list-disc">
+                {profile?.injuries && profile.injuries !== 'None' && (
+                  <li>
+                    Body Pain Profile: <strong className="text-slate-300">{profile.injuries}</strong>. High-impact movements and strain vectors have been substituted with low-impact or pain-free exercises.
+                  </li>
+                )}
+                {recoveryScore !== null && recoveryScore < 40 && (
+                  <li>
+                    Readiness Score: <strong className="text-slate-300">{recoveryScore}% (Red Zone)</strong>. Swapped to active rest, stretching, and mobility drills to support recovery.
+                  </li>
+                )}
+                {recoveryScore !== null && recoveryScore >= 40 && recoveryScore < 75 && (
+                  <li>
+                    Readiness Score: <strong className="text-slate-300">{recoveryScore}% (Yellow Zone)</strong>. Set and volume configurations scaled back by 30% to prevent fatigue overload.
+                  </li>
+                )}
+              </ul>
+            </div>
+          ) : (
+            <div className="p-3 bg-slate-950 border border-slate-850 rounded-2xl text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-2">
+              <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+              <span>Standard Baseline Plan (No pain or fatigue logged)</span>
+            </div>
+          )}
           
           {/* Warmup Sublist */}
           {d.warmup.length > 0 && (
             <div className="space-y-3">
-              <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">🔥 Warmup Prep</span>
+              <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Warmup Prep</span>
               <div className="grid grid-cols-1 gap-2">
                 {d.warmup.map((ex, idx) => (
                   <ExerciseRow key={idx} ex={ex} onStartTimer={() => setActiveTimerEx(ex)} />
@@ -301,21 +375,21 @@ export default function Workouts() {
               </div>
             </div>
           )}
-
+ 
           {/* Main Exercises Sublist */}
           <div className="space-y-3">
-            <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">💪 Workout Exercises</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Workout Exercises</span>
             <div className="grid grid-cols-1 gap-2">
               {d.exercises.map((ex, idx) => (
                 <ExerciseRow key={idx} ex={ex} onStartTimer={() => setActiveTimerEx(ex)} />
               ))}
             </div>
           </div>
-
+ 
           {/* Stretches list */}
           {d.stretches.length > 0 && (
             <div className="space-y-3 pt-2">
-              <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">🧘 Restorative Stretches</span>
+              <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Restorative Stretches</span>
               <div className="flex flex-wrap gap-2">
                 {d.stretches.map((s, idx) => (
                   <button
@@ -323,7 +397,7 @@ export default function Workouts() {
                     onClick={() => setActiveTimerEx({ name: s, reps: "25s Hold", timerSec: 25, totalSets: 1 })}
                     className="px-4 py-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 text-emerald-400 hover:text-emerald-300 text-xs rounded-xl font-semibold transition-all cursor-pointer"
                   >
-                    🧘 {s}
+                    {s}
                   </button>
                 ))}
               </div>
@@ -561,7 +635,7 @@ function TimerModal({ ex, onClose }) {
             
             <div className="text-center space-y-1">
               <div className="text-3xl font-black font-mono tracking-tight text-white">
-                {phase === 'done' ? '🎉' : phase === 'rest' ? formatMinSec(restSec) : isCountdown ? formatMinSec(remainSec) : formatMinSec(elapsedSec)}
+                {phase === 'done' ? 'COMPLETE' : phase === 'rest' ? formatMinSec(restSec) : isCountdown ? formatMinSec(remainSec) : formatMinSec(elapsedSec)}
               </div>
               <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
                 {phase === 'done' ? 'Done' : phase === 'rest' ? 'Rest Time' : isCountdown ? 'Remaining' : 'Elapsed'}
@@ -577,7 +651,7 @@ function TimerModal({ ex, onClose }) {
               onClick={onClose}
               className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all text-xs uppercase tracking-wider cursor-pointer"
             >
-              Finish Exercise ✓
+              Finish Exercise
             </button>
           )}
 

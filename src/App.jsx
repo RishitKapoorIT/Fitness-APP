@@ -162,7 +162,9 @@ function AppContent() {
           {/* Header Branding */}
           <div className="p-6 flex items-center justify-between border-b border-slate-850">
             <div className="flex items-center gap-2.5">
-              <span className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-base font-bold shadow-lg shadow-blue-500/10">💪</span>
+              <span className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/10">
+                <Activity className="h-4 w-4" />
+              </span>
               <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">Fitness Hub</span>
             </div>
             
@@ -265,7 +267,6 @@ function AppContent() {
 
             <form onSubmit={handleProfileUpdateSubmit} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
               
-              {/* Unit System Switcher */}
               <div className="flex justify-between items-center pb-4 border-b border-slate-850">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Measurement System</span>
                 <div className="bg-slate-950 p-0.5 rounded-lg border border-slate-850 flex">
@@ -274,14 +275,14 @@ function AppContent() {
                     onClick={() => handleUnitChange('metric')}
                     className={`px-3 py-1 text-[10px] rounded-md font-bold transition-all ${profUnits === 'metric' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
                   >
-                    🇮🇳 India (Metric)
+                    India (Metric)
                   </button>
                   <button
                     type="button"
                     onClick={() => handleUnitChange('imperial')}
                     className={`px-3 py-1 text-[10px] rounded-md font-bold transition-all ${profUnits === 'imperial' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
                   >
-                    🇺🇸 USA (Imperial)
+                    USA (Imperial)
                   </button>
                 </div>
               </div>
@@ -385,6 +386,10 @@ function AppContent() {
                     <option value="Knee Pain">Knee Pain</option>
                     <option value="Lower Back Pain">Lower Back Pain</option>
                     <option value="Shoulder Pain">Shoulder Pain</option>
+                    <option value="Ankle/Foot Pain">Ankle / Foot Pain</option>
+                    <option value="Elbow/Wrist Pain">Elbow / Wrist Pain</option>
+                    <option value="Hip/Groin Pain">Hip / Groin Pain</option>
+                    <option value="Neck/Upper Back Pain">Neck / Upper Back Pain</option>
                     <option value="None">None - Fit & Pain-Free</option>
                   </select>
                 </div>

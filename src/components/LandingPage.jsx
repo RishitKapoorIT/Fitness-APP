@@ -8,6 +8,7 @@ import {
   ftInToCm,
   lbsToKg
 } from '../utils/healthCalculators';
+import { Activity, Zap, Award, Calendar } from 'lucide-react';
 
 export default function LandingPage({ onGetStarted }) {
   // Public Calculator States
@@ -62,7 +63,9 @@ export default function LandingPage({ onGetStarted }) {
       <nav className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-lg font-bold shadow-lg shadow-blue-500/15">💪</span>
+            <span className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/15">
+              <Activity className="h-4.5 w-4.5" />
+            </span>
             <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">Fitness Hub</span>
           </div>
           <button
@@ -82,8 +85,9 @@ export default function LandingPage({ onGetStarted }) {
 
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
           <div className="lg:col-span-7 space-y-6 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
-              ⚡ Recovery-First Intelligent Coaching
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
+              <Zap className="h-3 w-3 text-blue-400" />
+              <span>Recovery-First Intelligent Coaching</span>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
               Fitness Made{' '}
@@ -113,8 +117,11 @@ export default function LandingPage({ onGetStarted }) {
           {/* Visual Mockup Card */}
           <div className="lg:col-span-5">
             <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-3xl shadow-2xl backdrop-blur-xl space-y-6">
-              <div className="flex justify-between items-center pb-4 border-b border-slate-800">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">🔥 Daily Focus Card</span>
+              <div className="flex justify-between items-center pb-4 border-b border-slate-800 flex-row">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Award className="h-3.5 w-3.5 text-indigo-400" />
+                  Daily Focus Card
+                </span>
                 <span className="text-[10px] bg-green-500/10 text-green-400 px-2.5 py-0.5 rounded-full font-bold border border-green-500/20">Optimal Recovery</span>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -131,7 +138,10 @@ export default function LandingPage({ onGetStarted }) {
               </div>
               <div className="bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50 space-y-2">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-400">📅 Today's Plan:</span>
+                  <span className="font-bold text-slate-400 flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                    Today's Plan:
+                  </span>
                   <span className="text-blue-400 font-semibold">Interval Walk/Jog</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
@@ -153,10 +163,10 @@ export default function LandingPage({ onGetStarted }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { title: '🏃 Adaptive Workouts', desc: 'Schedules that adjust dynamically if you log physical soreness or pain (like calf splints).' },
-              { title: '❤️ Recovery Intelligence', desc: 'Calculates a daily readiness score based on sleep hours, energy, and muscle fatigue.' },
-              { title: '📊 Health Metrics', desc: 'Track BMI, Basal Metabolic Rate (BMR), and Total Daily Energy Expenditure (TDEE) side by side.' },
-              { title: '🤖 AI Fitness Assistant', desc: 'Direct chat assistant powered by Gemini API, trained with your specific injury profile to guide safe movement.' }
+              { title: 'Adaptive Workouts', desc: 'Schedules that adjust dynamically if you log physical soreness or pain (like calf splints).' },
+              { title: 'Recovery Intelligence', desc: 'Calculates a daily readiness score based on sleep hours, energy, and muscle fatigue.' },
+              { title: 'Health Metrics', desc: 'Track BMI, Basal Metabolic Rate (BMR), and Total Daily Energy Expenditure (TDEE) side by side.' },
+              { title: 'AI Fitness Assistant', desc: 'Direct chat assistant powered by Gemini API, trained with your specific injury profile to guide safe movement.' }
             ].map((f, i) => (
               <div key={i} className="bg-slate-900/40 border border-slate-900 hover:border-slate-800 p-6 rounded-2xl hover:-translate-y-1 transition-all duration-300">
                 <h3 className="font-extrabold text-lg text-slate-200 mb-2">{f.title}</h3>
@@ -227,13 +237,13 @@ export default function LandingPage({ onGetStarted }) {
                   onClick={() => { setUnitSystem('metric'); setCalcResult(null); }}
                   className={`px-3 py-1 text-[10px] rounded-md font-bold transition-all ${unitSystem === 'metric' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
-                  🇮🇳 Metric (kg/cm)
+                  Metric (kg/cm)
                 </button>
                 <button
                   onClick={() => { setUnitSystem('imperial'); setCalcResult(null); }}
                   className={`px-3 py-1 text-[10px] rounded-md font-bold transition-all ${unitSystem === 'imperial' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
-                  🇺🇸 Imperial (lbs/ft)
+                  Imperial (lbs/ft)
                 </button>
               </div>
             </div>
@@ -374,7 +384,7 @@ export default function LandingPage({ onGetStarted }) {
           </div>
           <p>© 2026 Fitness Hub. Customized for Rishit Kapoor. Standalone MVP.</p>
           <div className="text-[10px] text-slate-600 font-mono italic">
-            Consistency for 6 months &gt; Intensity for 10 days 💪
+            Consistency for 6 months &gt; Intensity for 10 days
           </div>
         </div>
       </footer>
