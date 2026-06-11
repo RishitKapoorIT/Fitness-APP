@@ -107,6 +107,10 @@ export default function Workouts() {
   });
   
   const [activeTimerEx, setActiveTimerEx] = useState(null);
+
+  // Continuous Workout Player States
+  const [activePlayerSteps, setActivePlayerSteps] = useState(null);
+  const [currentPlayerStepIdx, setCurrentPlayerStepIdx] = useState(0);
   
   // Stopwatch States
   const [swSecs, setSwSecs] = useState(0);
@@ -317,7 +321,20 @@ export default function Workouts() {
             <h2 className="text-xl font-extrabold text-slate-100">{d.label} Routine</h2>
             <p className="text-slate-400 text-xs">{d.focus}</p>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            {d.duration !== '—' && (
+              <button
+                onClick={() => {
+                  const steps = compileWorkoutSteps(d);
+                  setActivePlayerSteps(steps);
+                  setCurrentPlayerStepIdx(0);
+                }}
+                className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+              >
+                <Play className="h-3.5 w-3.5 fill-current" />
+                Play Workout
+              </button>
+            )}
             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${badgeTheme.bg} ${badgeTheme.text} ${badgeTheme.border}`}>
               {d.type}
             </span>
@@ -367,7 +384,7 @@ export default function Workouts() {
           {/* Warmup Sublist */}
           {d.warmup.length > 0 && (
             <div className="space-y-3">
-              <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Warmup Prep</span>
+              <span className="text-xs md:text-sm font-extrabold uppercase text-slate-300 tracking-wider block mt-2">Warmup Prep</span>
               <div className="grid grid-cols-1 gap-2">
                 {d.warmup.map((ex, idx) => (
                   <ExerciseRow key={idx} ex={ex} onStartTimer={() => setActiveTimerEx(ex)} />
@@ -375,21 +392,21 @@ export default function Workouts() {
               </div>
             </div>
           )}
- 
+
           {/* Main Exercises Sublist */}
           <div className="space-y-3">
-            <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Workout Exercises</span>
+            <span className="text-xs md:text-sm font-extrabold uppercase text-slate-300 tracking-wider block mt-2">Workout Exercises</span>
             <div className="grid grid-cols-1 gap-2">
               {d.exercises.map((ex, idx) => (
                 <ExerciseRow key={idx} ex={ex} onStartTimer={() => setActiveTimerEx(ex)} />
               ))}
             </div>
           </div>
- 
+
           {/* Stretches list */}
           {d.stretches.length > 0 && (
             <div className="space-y-3 pt-2">
-              <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Restorative Stretches</span>
+              <span className="text-xs md:text-sm font-extrabold uppercase text-slate-300 tracking-wider block mt-2">Restorative Stretches</span>
               <div className="flex flex-wrap gap-2">
                 {d.stretches.map((s, idx) => (
                   <button
@@ -443,6 +460,16 @@ export default function Workouts() {
         <TimerModal
           ex={activeTimerEx}
           onClose={() => setActiveTimerEx(null)}
+        />
+      )}
+
+      {/* CONTINUOUS WORKOUT SESSION PLAYER */}
+      {activePlayerSteps && (
+        <WorkoutPlayerModal
+          steps={activePlayerSteps}
+          activeIdx={currentPlayerStepIdx}
+          setActiveIdx={setCurrentPlayerStepIdx}
+          onClose={() => setActivePlayerSteps(null)}
         />
       )}
 
@@ -692,6 +719,345 @@ function TimerModal({ ex, onClose }) {
                 </button>
               )}
             </>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ─── SEQUENTIAL WORKOUT SESSION PLAYER ENGINE ─────────────────────────────────
+
+const compileWorkoutSteps = (dayPlan) => {
+  const steps = [];
+
+  // 1. Warmup Prep
+  if (dayPlan.warmup && dayPlan.warmup.length > 0) {
+    dayPlan.warmup.forEach((ex, idx) => {
+      steps.push({
+        id: `warmup-${idx}`,
+        name: ex.name,
+        section: 'Warmup Prep',
+        note: ex.detail || ex.note || 'Prepare your muscles',
+        timerSec: ex.timerSec || 0,
+        setIndex: 1,
+        totalSets: 1,
+        isRest: false
+      });
+    });
+  }
+
+  // 2. Main Workout
+  if (dayPlan.exercises && dayPlan.exercises.length > 0) {
+    const intervalExs = dayPlan.exercises.filter(ex => ex.isInterval);
+    const nonIntervalExs = dayPlan.exercises.filter(ex => !ex.isInterval);
+
+    if (intervalExs.length > 0) {
+      // Find max sets
+      const maxSets = Math.max(...intervalExs.map(e => e.totalSets || 1));
+      for (let s = 1; s <= maxSets; s++) {
+        intervalExs.forEach((ex) => {
+          if (s <= (ex.totalSets || 1)) {
+            steps.push({
+              id: `interval-work-${ex.name}-${s}`,
+              name: ex.name,
+              section: 'Main Workout (Intervals)',
+              note: ex.note || `Set ${s} of ${ex.totalSets}`,
+              timerSec: ex.timerSec || 0,
+              setIndex: s,
+              totalSets: ex.totalSets,
+              isRest: false
+            });
+          }
+        });
+      }
+    }
+
+    // Add non-interval exercises
+    nonIntervalExs.forEach((ex, idx) => {
+      if (ex.name === "Rest & Recovery" || ex.sets === "—") return;
+
+      const sets = ex.totalSets || 1;
+      for (let s = 1; s <= sets; s++) {
+        steps.push({
+          id: `work-${ex.name}-${s}`,
+          name: ex.name,
+          section: 'Main Workout',
+          note: `${ex.note ? ex.note + ' · ' : ''}Set ${s} of ${sets} ${ex.reps ? '· ' + ex.reps : ''}`,
+          timerSec: ex.timerSec || 0, // 0 means stopwatch style
+          setIndex: s,
+          totalSets: sets,
+          isRest: false
+        });
+
+        // Add rest step if not the last set of the last exercise
+        if (s < sets || idx < nonIntervalExs.length - 1) {
+          steps.push({
+            id: `rest-${ex.name}-${s}`,
+            name: 'Rest Period',
+            section: 'Rest / Transition',
+            note: `Catch your breath. Up next: ${s < sets ? `${ex.name} (Set ${s + 1})` : (nonIntervalExs[idx + 1] ? nonIntervalExs[idx + 1].name : 'Stretches')}`,
+            timerSec: 45, // default rest duration
+            setIndex: s,
+            totalSets: sets,
+            isRest: true
+          });
+        }
+      }
+    });
+  }
+
+  // 3. Restorative Stretches
+  if (dayPlan.stretches && dayPlan.stretches.length > 0) {
+    if (steps.length > 0) {
+      steps.push({
+        id: `rest-pre-stretch`,
+        name: 'Rest & Prepare Stretches',
+        section: 'Rest / Transition',
+        note: `Prepare for: ${dayPlan.stretches[0]}`,
+        timerSec: 15,
+        setIndex: 1,
+        totalSets: 1,
+        isRest: true
+      });
+    }
+
+    dayPlan.stretches.forEach((stretchName, idx) => {
+      steps.push({
+        id: `stretch-${idx}`,
+        name: stretchName,
+        section: 'Restorative Stretches',
+        note: 'Hold static stretch · Focus on breathing',
+        timerSec: 30, // default 30s stretch hold
+        setIndex: 1,
+        totalSets: 1,
+        isRest: false
+      });
+
+      if (idx < dayPlan.stretches.length - 1) {
+        steps.push({
+          id: `rest-stretch-${idx}`,
+          name: 'Rest & Change Stretch',
+          section: 'Rest / Transition',
+          note: `Up next: ${dayPlan.stretches[idx + 1]}`,
+          timerSec: 10,
+          setIndex: 1,
+          totalSets: 1,
+          isRest: true
+        });
+      }
+    });
+  }
+
+  return steps;
+};
+
+function WorkoutPlayerModal({ steps, activeIdx, setActiveIdx, onClose }) {
+  const step = steps[activeIdx];
+  const total = steps.length;
+  
+  const [isRunning, setIsRunning] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(step.timerSec || 0);
+  const [elapsed, setElapsed] = useState(0);
+  
+  const timerRef = useRef(null);
+
+  const playBeep = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.frequency.value = 800;
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } catch (err) {
+      console.warn("Could not play audio beep:", err);
+    }
+  };
+
+  useEffect(() => {
+    setTimeLeft(step.timerSec || 0);
+    setElapsed(0);
+    setIsRunning(true);
+  }, [activeIdx, step]);
+
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    
+    if (isRunning) {
+      timerRef.current = setInterval(() => {
+        if (step.timerSec > 0) {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              clearInterval(timerRef.current);
+              playBeep();
+              if (activeIdx < total - 1) {
+                setActiveIdx((idx) => idx + 1);
+              } else {
+                setIsRunning(false);
+              }
+              return 0;
+            }
+            return prev - 1;
+          });
+        } else {
+          setElapsed((prev) => prev + 1);
+        }
+      }, 1000);
+    }
+    
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isRunning, activeIdx, step, total, setActiveIdx]);
+
+  const handleNext = () => {
+    if (activeIdx < total - 1) {
+      setActiveIdx((idx) => idx + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (activeIdx > 0) {
+      setActiveIdx((idx) => idx - 1);
+    }
+  };
+
+  const formatTime = (s) => {
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    return `${mins}:${String(secs).padStart(2, '0')}`;
+  };
+
+  const progressPercent = ((activeIdx + 1) / total) * 100;
+  const nextStep = activeIdx < total - 1 ? steps[activeIdx + 1] : null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative text-left">
+        
+        {/* Top Header */}
+        <div className="flex justify-between items-center pb-2">
+          <div>
+            <span className="text-[10px] font-bold uppercase text-blue-400 tracking-widest bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-md">
+              {step.section}
+            </span>
+          </div>
+          <button 
+            onClick={onClose}
+            className="text-slate-400 hover:text-white font-bold text-sm bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-850 cursor-pointer"
+          >
+            ✕ Quit
+          </button>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+            <span>Step {activeIdx + 1} of {total}</span>
+            <span>{Math.round(progressPercent)}% Done</span>
+          </div>
+          <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-850/50">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Content Body */}
+        <div className="py-6 flex flex-col items-center justify-center text-center space-y-4">
+          <h2 className="text-3xl font-black text-slate-100 leading-tight">
+            {step.name}
+          </h2>
+          
+          <p className="text-xs text-slate-400 font-semibold max-w-sm">
+            {step.note}
+          </p>
+
+          {/* Large Clock */}
+          <div className="py-2">
+            <div className="relative h-44 w-44 flex items-center justify-center rounded-full bg-slate-950 border-[8px] border-slate-850 shadow-inner">
+              {step.timerSec > 0 && (
+                <svg className="absolute inset-0 transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="#1e293b" strokeWidth="4" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke={step.isRest ? "#10b981" : "#3b82f6"}
+                    strokeWidth="4"
+                    strokeDasharray={282}
+                    strokeDashoffset={282 - (282 * timeLeft) / step.timerSec}
+                    strokeLinecap="round"
+                    className="transition-all duration-100"
+                  />
+                </svg>
+              )}
+              
+              <div className="text-center z-10">
+                <div className="text-4xl font-black font-mono tracking-tight text-slate-100">
+                  {step.timerSec > 0 ? formatTime(timeLeft) : formatTime(elapsed)}
+                </div>
+                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                  {step.timerSec > 0 ? (step.isRest ? 'REST' : 'COUNTDOWN') : 'STOPWATCH'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Control Buttons */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={handlePrev}
+              disabled={activeIdx === 0}
+              className="bg-slate-950 hover:bg-slate-800 border border-slate-850 py-3 rounded-2xl text-xs font-bold text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer flex items-center justify-center gap-1"
+            >
+              ← Prev
+            </button>
+            
+            <button
+              onClick={() => setIsRunning(!isRunning)}
+              className={`py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 shadow-lg ${
+                isRunning 
+                  ? 'bg-amber-600/10 text-amber-500 border border-amber-500/20 hover:bg-amber-600/20' 
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/10'
+              }`}
+            >
+              {isRunning ? 'Pause' : 'Resume'}
+            </button>
+            
+            <button
+              onClick={handleNext}
+              disabled={activeIdx === total - 1}
+              className="bg-slate-950 hover:bg-slate-800 border border-slate-850 py-3 rounded-2xl text-xs font-bold text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer flex items-center justify-center gap-1"
+            >
+              Next →
+            </button>
+          </div>
+
+          {/* Up Next Preview Footer */}
+          {nextStep ? (
+            <div className="p-3 bg-slate-950/60 border border-slate-850/50 rounded-2xl flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Up Next:</span>
+              <span className="text-slate-300 font-bold truncate max-w-[200px]">{nextStep.name}</span>
+              <span className="text-[10px] text-slate-500 font-semibold">{nextStep.timerSec > 0 ? `${formatTime(nextStep.timerSec)}` : 'Reps'}</span>
+            </div>
+          ) : (
+            <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl text-center text-xs text-emerald-400 font-bold flex items-center justify-center gap-1.5">
+              <CheckCircle className="h-4 w-4" />
+              Final Step of Workout!
+            </div>
           )}
         </div>
 

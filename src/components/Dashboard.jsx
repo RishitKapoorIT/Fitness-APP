@@ -20,7 +20,8 @@ import {
   ChevronRight,
   TrendingUp,
   Heart,
-  Plus
+  Plus,
+  Undo
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -110,11 +111,22 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         } else {
           setWeightHistory(userLocalLogs.weight || []);
         }
+
+        // Sync local logs with what we fetched from Supabase
+        const updatedLogs = { ...userLocalLogs };
+        if (recData) updatedLogs.recovery[todayStr] = recData;
+        if (waterData) updatedLogs.water[todayStr] = waterData.amount_liters;
+        if (wtData && wtData.length > 0) {
+          updatedLogs.weight = wtData.map(w => ({ date: w.date, weight: w.weight_kg }));
+        }
+        setLocalLogs(updatedLogs);
+        localStorage.setItem(`fitness_logs_${user.id}`, JSON.stringify(updatedLogs));
       } catch (err) {
         console.warn('Using LocalStorage fallback for Dashboard:', err);
         if (userLocalLogs.recovery[todayStr]) setTodayRecovery(userLocalLogs.recovery[todayStr]);
         if (userLocalLogs.water[todayStr]) setTodayWater(userLocalLogs.water[todayStr]);
         setWeightHistory(userLocalLogs.weight || []);
+        setLocalLogs(userLocalLogs);
       }
     };
 
@@ -166,7 +178,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
 
     // Save to Supabase
     try {
-      await supabase.from('recovery_logs').upsert(logPayload);
+      await supabase.from('recovery_logs').upsert(logPayload, { onConflict: 'user_id,date' });
     } catch (err) {
       console.error('Supabase save error:', err);
     }
@@ -191,7 +203,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
     setTodayWater(newAmt);
 
     try {
-      await supabase.from('water_logs').upsert(logPayload);
+      await supabase.from('water_logs').upsert(logPayload, { onConflict: 'user_id,date' });
     } catch (err) {
       console.error('Supabase water log error:', err);
     }
@@ -492,7 +504,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
                   />
                 </svg>
                 <div className="text-center">
-                  <div className="text-3xl font-black text-slate-200">{todayWater.toFixed(1)}</div>
+                  <div className="text-3xl font-black text-slate-200">{todayWater.toFixed(2)}</div>
                   <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">/ 3.0 Liters</div>
                 </div>
               </div>
@@ -503,28 +515,29 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => addWater(0.25)}
-                  className="bg-slate-950 hover:bg-slate-800 border border-slate-850 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
+                  className="bg-slate-950 hover:bg-slate-850 border border-slate-850 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
                 >
                   +250 ml
                 </button>
                 <button
                   onClick={() => addWater(0.5)}
-                  className="bg-slate-950 hover:bg-slate-800 border border-slate-850 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
+                  className="bg-slate-950 hover:bg-slate-850 border border-slate-850 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
                 >
                   +500 ml
                 </button>
                 <button
                   onClick={() => addWater(1.0)}
-                  className="bg-slate-950 hover:bg-slate-800 border border-slate-850 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
+                  className="bg-slate-950 hover:bg-slate-850 border border-slate-850 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
                 >
                   +1.0 Liter
                 </button>
               </div>
               <button
                 onClick={() => addWater(-0.25)}
-                className="w-full text-slate-500 hover:text-slate-400 text-[10px] transition-colors py-1 cursor-pointer"
+                className="w-full bg-slate-950/40 dark:bg-slate-950/40 hover:bg-red-500/10 border border-slate-850 hover:border-red-500/20 py-2.5 rounded-xl text-[10px] font-semibold text-slate-400 hover:text-red-400 transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                Accidentally added? Remove 250ml
+                <Undo className="h-3.5 w-3.5" />
+                Accidentally Added? Remove 250ml
               </button>
             </div>
           </div>

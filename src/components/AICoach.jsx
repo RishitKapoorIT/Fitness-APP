@@ -85,10 +85,20 @@ export default function AICoach() {
         return true;
       });
 
-      const apiMessages = userStartedHistory.map((m) => ({
-        role: m.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: m.text }]
-      }));
+      // Merge consecutive messages of the same role to strictly alternate user -> model
+      const apiMessages = [];
+      userStartedHistory.forEach((m) => {
+        const role = m.sender === 'user' ? 'user' : 'model';
+        if (apiMessages.length > 0 && apiMessages[apiMessages.length - 1].role === role) {
+          // Append text to the last message's parts
+          apiMessages[apiMessages.length - 1].parts[0].text += `\n\n${m.text}`;
+        } else {
+          apiMessages.push({
+            role: role,
+            parts: [{ text: m.text }]
+          });
+        }
+      });
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
@@ -107,6 +117,22 @@ export default function AICoach() {
       );
 
       const data = await response.json();
+      
+      if (data.error) {
+        let errMsg = data.error.message || "Unknown error";
+        if (data.error.status === "INVALID_ARGUMENT" || errMsg.includes("API key")) {
+          errMsg = "Your Gemini API Key is invalid or not active. Please check the `VITE_GEMINI_API_KEY` setting in your `.env` file.";
+        }
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: 'coach',
+            text: `**Connection Error:** ${errMsg}`
+          }
+        ]);
+        return;
+      }
+
       const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I had trouble connecting. Please try again.";
 
       setMessages((prev) => [...prev, { sender: 'coach', text: botText }]);

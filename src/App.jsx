@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LandingPage from './components/LandingPage';
 import Auth from './components/Auth';
@@ -16,7 +16,9 @@ import {
   LogOut,
   Menu,
   X,
-  Settings
+  Settings,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 function AppContent() {
@@ -26,6 +28,21 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'workouts' | 'library' | 'coach' | 'settings'
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [viewAuth, setViewAuth] = useState(false); // Public routes: false = Landing, true = Login
+
+  // Theme State
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.add('light');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.body.classList.remove('light');
+      localStorage.setItem('theme', 'dark');
+    }
+  }, [theme]);
 
   // Profile Form States
   const [profName, setProfName] = useState('');
@@ -154,7 +171,7 @@ function AppContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col md:flex-row">
       
       {/* Sidebar Navigation */}
       <aside className="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between shrink-0">
@@ -168,13 +185,24 @@ function AppContent() {
               <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">Fitness Hub</span>
             </div>
             
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="md:hidden text-slate-400 hover:text-white cursor-pointer"
-            >
-              {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Theme Toggle */}
+              <button
+                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                className="text-slate-400 hover:text-slate-200 p-2 rounded-xl bg-slate-950 border border-slate-850 hover:bg-slate-850 transition-all cursor-pointer flex items-center justify-center"
+                title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+              >
+                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              </button>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="md:hidden text-slate-400 hover:text-white cursor-pointer"
+              >
+                {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
           {/* Nav Links */}

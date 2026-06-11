@@ -12,11 +12,29 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  @apply bg-slate-50 text-slate-900 transition-colors duration-200 antialiased;
+  @apply bg-slate-950 text-slate-200 transition-colors duration-200 antialiased;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Outfit', sans-serif;
+}
+
+/* Custom Light Mode Variable Overrides for Tailwind CSS v4 */
+body.light {
+  background-color: #f8fafc;
+  color: #0f172a;
+  
+  --color-slate-950: #f8fafc;  /* light app background */
+  --color-slate-900: #ffffff;  /* light card background */
+  --color-slate-850: #f1f5f9;  /* subtle border */
+  --color-slate-800: #cbd5e1;  /* card border */
+  
+  /* Text overrides */
+  --color-slate-100: #0f172a;  /* heading colors */
+  --color-slate-200: #1e293b;  /* secondary texts */
+  --color-slate-300: #334155;  /* body texts */
+  --color-slate-400: #475569;  /* muted texts */
+  --color-slate-500: #64748b;  /* helper labels */
 }
 
 /* Custom Premium Utilities & Animations */
@@ -32,6 +50,11 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body.light .glassmorphism {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 /* Smooth, premium scrollbar */
