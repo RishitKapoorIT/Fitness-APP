@@ -27,12 +27,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           contents,
@@ -48,7 +47,7 @@ Deno.serve(async (req: Request) => {
       status: response.status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
-  } catch (error) {
+  } catch (error: any) {
     return new Response(
       JSON.stringify({ error: { message: error.message } }),
       { 
