@@ -16,20 +16,20 @@ export default function Auth() {
   
   // Profile Setup Fields (Step 2 of Sign Up)
   const [step, setStep] = useState(1); // 1 = Account Info, 2 = Physical Details, 3 = Goals
-  const [age, setAge] = useState('21');
+  const [age, setAge] = useState('');
   const [gender, setGender] = useState('male');
   const [unitSystem, setUnitSystem] = useState('metric'); // 'metric' = India (kg/cm), 'imperial' = USA (lbs/ft-in)
   
   // Weight & Height States
-  const [weightKg, setWeightKg] = useState('84');
-  const [weightLbs, setWeightLbs] = useState('185');
-  const [heightCm, setHeightCm] = useState('173');
-  const [heightFt, setHeightFt] = useState('5');
-  const [heightIn, setHeightIn] = useState('8');
+  const [weightKg, setWeightKg] = useState('');
+  const [weightLbs, setWeightLbs] = useState('');
+  const [heightCm, setHeightCm] = useState('');
+  const [heightFt, setHeightFt] = useState('');
+  const [heightIn, setHeightIn] = useState('');
   
   const [activityLevel, setActivityLevel] = useState('moderate');
-  const [goal, setGoal] = useState('Fat Loss + Endurance');
-  const [injuries, setInjuries] = useState('Shin/Calf Pain');
+  const [goal, setGoal] = useState('General Health');
+  const [injuries, setInjuries] = useState('None');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,7 +132,7 @@ export default function Auth() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Rishit Kapoor"
+                    placeholder="Your Full Name"
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
@@ -214,6 +214,7 @@ export default function Auth() {
                     type="number"
                     value={age}
                     onChange={(e) => setAge(e.target.value)}
+                    placeholder="25"
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                   />
                 </div>
@@ -240,6 +241,7 @@ export default function Auth() {
                         type="number"
                         value={weightKg}
                         onChange={(e) => setWeightKg(e.target.value)}
+                        placeholder="70"
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                       />
                     </div>
@@ -249,6 +251,7 @@ export default function Auth() {
                         type="number"
                         value={heightCm}
                         onChange={(e) => setHeightCm(e.target.value)}
+                        placeholder="170"
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                       />
                     </div>
@@ -261,6 +264,7 @@ export default function Auth() {
                         type="number"
                         value={weightLbs}
                         onChange={(e) => setWeightLbs(e.target.value)}
+                        placeholder="150"
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                       />
                     </div>

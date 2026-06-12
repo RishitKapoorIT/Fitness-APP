@@ -156,18 +156,18 @@ export default function AICoach() {
           <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-850 space-y-3 text-xs">
             <div>
               <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Athlete Profile</span>
-              <p className="text-slate-300 font-semibold mt-0.5">{profile?.name || 'Rishit Kapoor'} (Age {profile?.age || 21})</p>
+              <p className="text-slate-300 font-semibold mt-0.5">{profile?.name || 'Athlete'} (Age {profile?.age || 25})</p>
             </div>
             <div>
               <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Injuries / Concerns</span>
               <p className="text-red-400 font-semibold mt-0.5 flex items-center gap-1">
                 <AlertTriangle className="h-3.5 w-3.5" />
-                {profile?.injuries || 'Shin/Calf Pain'}
+                {profile?.injuries || 'None'}
               </p>
             </div>
             <div>
               <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Target Goal</span>
-              <p className="text-blue-400 font-semibold mt-0.5">{profile?.goal || 'Fat Loss + Endurance'}</p>
+              <p className="text-blue-400 font-semibold mt-0.5">{profile?.goal || 'General Fitness'}</p>
             </div>
           </div>
 

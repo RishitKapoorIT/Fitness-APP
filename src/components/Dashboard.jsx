@@ -464,13 +464,13 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
   };
 
   // Health Metrics Computations
-  const weightVal = profile?.weight_kg || 84;
-  const heightVal = profile?.height_cm || 173;
+  const weightVal = profile?.weight_kg || 70;
+  const heightVal = profile?.height_cm || 170;
   const isMetric = profile?.unit_system !== 'imperial';
 
   const bmi = calculateBMI(weightVal, heightVal);
   const bmiCat = getBMICategory(bmi);
-  const bmr = calculateBMR(weightVal, heightVal, profile?.age || 21, profile?.gender || 'male');
+  const bmr = calculateBMR(weightVal, heightVal, profile?.age || 25, profile?.gender || 'male');
   const tdee = calculateTDEE(bmr, profile?.activity_level || 'moderate');
 
   // Chart Formatting
