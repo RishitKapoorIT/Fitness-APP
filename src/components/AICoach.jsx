@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../supabaseClient';
 import { MessageSquare, Send, Sparkles, AlertTriangle, CornerDownLeft } from 'lucide-react';
 
 export default function AICoach() {
@@ -39,8 +40,6 @@ export default function AICoach() {
     }
   }, [messages, profile]);
 
-  const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
   const handleSendMessage = async (textToSend) => {
     const query = textToSend || input;
     if (!query.trim()) return;
@@ -51,21 +50,6 @@ export default function AICoach() {
     const updatedMessages = [...messages, { sender: 'user', text: query }];
     setMessages(updatedMessages);
     setLoading(true);
-
-    if (!geminiApiKey || geminiApiKey === 'your-gemini-api-key') {
-      // Mock fallback if API key is not yet set up
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: 'coach',
-            text: "**Gemini API Key is not configured yet.** Please add your `VITE_GEMINI_API_KEY` to the `.env` file in your project directory to activate real-time Gemini AI coaching. \n\n*Note for Rishit: Ensure your key is from Google AI Studio.*"
-          }
-        ]);
-        setLoading(false);
-      }, 1000);
-      return;
-    }
 
     try {
       // Build context payload
@@ -100,48 +84,40 @@ export default function AICoach() {
         }
       });
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': geminiApiKey
-          },
-          body: JSON.stringify({
-            contents: apiMessages,
-            systemInstruction: {
-              parts: [{ text: systemPrompt }]
-            }
-          })
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('coach-chat', {
+        body: { contents: apiMessages, systemPrompt: systemPrompt }
+      });
 
-      const data = await response.json();
-      
-      if (data.error) {
+      if (error) {
+        throw new Error(error.message || "Failed to invoke Edge Function");
+      }
+
+      if (data?.error) {
         let errMsg = data.error.message || "Unknown error";
-        if (data.error.status === "INVALID_ARGUMENT" || errMsg.includes("API key")) {
-          errMsg = "Your Gemini API Key is invalid or not active. Please check the `VITE_GEMINI_API_KEY` setting in your `.env` file.";
+        if (errMsg.includes("GEMINI_API_KEY")) {
+          errMsg = "Your Gemini API Key is not set on the Supabase backend. Please configure GEMINI_API_KEY in your Supabase project settings.";
         }
         setMessages((prev) => [
           ...prev,
           {
             sender: 'coach',
-            text: `**Connection Error:** ${errMsg}`
+            text: `**AI Coach Error:** ${errMsg}`
           }
         ]);
         return;
       }
 
-      const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I had trouble connecting. Please try again.";
+      const botText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I had trouble connecting. Please try again.";
 
       setMessages((prev) => [...prev, { sender: 'coach', text: botText }]);
     } catch (err) {
       console.error(err);
       setMessages((prev) => [
         ...prev,
-        { sender: 'coach', text: "Error connecting to AI Coach. Please check your internet connection or API keys." }
+        { 
+          sender: 'coach', 
+          text: `**Connection Error:** ${err.message || "Could not connect to AI Coach."} Please ensure the Edge Function is deployed and active.` 
+        }
       ]);
     } finally {
       setLoading(false);

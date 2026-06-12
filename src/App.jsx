@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import LandingPage from './components/LandingPage';
-import Auth from './components/Auth';
-import Dashboard from './components/Dashboard';
-import Workouts from './components/Workouts';
-import ExerciseLibrary from './components/ExerciseLibrary';
-import AICoach from './components/AICoach';
+
+const LandingPage = lazy(() => import('./components/LandingPage'));
+const Auth = lazy(() => import('./components/Auth'));
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const Workouts = lazy(() => import('./components/Workouts'));
+const ExerciseLibrary = lazy(() => import('./components/ExerciseLibrary'));
+const AICoach = lazy(() => import('./components/AICoach'));
 import { cmToFtIn, ftInToCm, kgToLbs, lbsToKg } from './utils/healthCalculators';
 import {
   LayoutDashboard,
@@ -155,11 +156,27 @@ function AppContent() {
           >
             ← Back to Home
           </button>
-          <Auth />
+          <Suspense fallback={
+            <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
+              <div className="h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-slate-400 text-xs font-mono">Loading authentication...</p>
+            </div>
+          }>
+            <Auth />
+          </Suspense>
         </div>
       );
     }
-    return <LandingPage onGetStarted={() => setViewAuth(true)} />;
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
+          <div className="h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-slate-400 text-xs font-mono">Loading homepage...</p>
+        </div>
+      }>
+        <LandingPage onGetStarted={() => setViewAuth(true)} />
+      </Suspense>
+    );
   }
 
   // ─── AUTHENTICATED ROUTES (WORKSPACE SHELL) ────────────────────────────────
@@ -278,181 +295,188 @@ function AppContent() {
 
       {/* Main Workspace Frame */}
       <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-5xl mx-auto w-full">
-        {activeTab === 'dashboard' && (
-          <Dashboard
-            onStartWorkout={() => setActiveTab('workouts')}
-            setActiveTab={setActiveTab}
-          />
-        )}
-        
-        {activeTab === 'workouts' && <Workouts />}
-        
-        {activeTab === 'library' && <ExerciseLibrary />}
-        
-        {activeTab === 'coach' && <AICoach />}
+        <Suspense fallback={
+          <div className="flex flex-col items-center justify-center h-[calc(100vh-16rem)] w-full text-slate-400">
+            <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
+            <p className="text-xs font-mono">Loading view...</p>
+          </div>
+        }>
+          {activeTab === 'dashboard' && (
+            <Dashboard
+              onStartWorkout={() => setActiveTab('workouts')}
+              setActiveTab={setActiveTab}
+            />
+          )}
+          
+          {activeTab === 'workouts' && <Workouts />}
+          
+          {activeTab === 'library' && <ExerciseLibrary />}
+          
+          {activeTab === 'coach' && <AICoach />}
 
-        {activeTab === 'settings' && (
-          <div className="space-y-6 page-fade-in text-left">
-            <div className="space-y-1">
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Profile Settings</h1>
-              <p className="text-slate-400 text-xs">Manage your goals, weight/height metrics, and injuries context.</p>
-            </div>
-
-            <form onSubmit={handleProfileUpdateSubmit} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
-              
-              <div className="flex justify-between items-center pb-4 border-b border-slate-850">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Measurement System</span>
-                <div className="bg-slate-950 p-0.5 rounded-lg border border-slate-850 flex">
-                  <button
-                    type="button"
-                    onClick={() => handleUnitChange('metric')}
-                    className={`px-3 py-1 text-[10px] rounded-md font-bold transition-all ${profUnits === 'metric' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                  >
-                    India (Metric)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleUnitChange('imperial')}
-                    className={`px-3 py-1 text-[10px] rounded-md font-bold transition-all ${profUnits === 'imperial' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                  >
-                    USA (Imperial)
-                  </button>
-                </div>
+          {activeTab === 'settings' && (
+            <div className="space-y-6 page-fade-in text-left">
+              <div className="space-y-1">
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Profile Settings</h1>
+                <p className="text-slate-400 text-xs">Manage your goals, weight/height metrics, and injuries context.</p>
               </div>
 
-              {/* Name & Age Row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={profName}
-                    onChange={(e) => setProfName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs focus:outline-none"
-                  />
+              <form onSubmit={handleProfileUpdateSubmit} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
+                
+                <div className="flex justify-between items-center pb-4 border-b border-slate-850">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Measurement System</span>
+                  <div className="bg-slate-950 p-0.5 rounded-lg border border-slate-850 flex">
+                    <button
+                      type="button"
+                      onClick={() => handleUnitChange('metric')}
+                      className={`px-3 py-1 text-[10px] rounded-md font-bold transition-all ${profUnits === 'metric' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    >
+                      India (Metric)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUnitChange('imperial')}
+                      className={`px-3 py-1 text-[10px] rounded-md font-bold transition-all ${profUnits === 'imperial' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    >
+                      USA (Imperial)
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Age (Years)</label>
-                  <input
-                    type="number"
-                    required
-                    value={profAge}
-                    onChange={(e) => setProfAge(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs focus:outline-none"
-                  />
-                </div>
-              </div>
 
-              {/* Physical Metrics Row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    Weight ({profUnits === 'metric' ? 'kg' : 'lbs'})
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    required
-                    value={profWeight}
-                    onChange={(e) => setProfWeight(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Height</label>
-                  {profUnits === 'metric' ? (
+                {/* Name & Age Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={profName}
+                      onChange={(e) => setProfName(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Age (Years)</label>
                     <input
                       type="number"
                       required
-                      value={profHeightCm}
-                      onChange={(e) => setProfHeightCm(e.target.value)}
-                      placeholder="cm"
+                      value={profAge}
+                      onChange={(e) => setProfAge(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs focus:outline-none"
                     />
-                  ) : (
-                    <div className="flex gap-2">
+                  </div>
+                </div>
+
+                {/* Physical Metrics Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Weight ({profUnits === 'metric' ? 'kg' : 'lbs'})
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      required
+                      value={profWeight}
+                      onChange={(e) => setProfWeight(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Height</label>
+                    {profUnits === 'metric' ? (
                       <input
                         type="number"
                         required
-                        value={profHeightFt}
-                        onChange={(e) => setProfHeightFt(e.target.value)}
-                        placeholder="ft"
-                        className="w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-2 py-3 text-xs focus:outline-none text-center"
+                        value={profHeightCm}
+                        onChange={(e) => setProfHeightCm(e.target.value)}
+                        placeholder="cm"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs focus:outline-none"
                       />
-                      <input
-                        type="number"
-                        required
-                        value={profHeightIn}
-                        onChange={(e) => setProfHeightIn(e.target.value)}
-                        placeholder="in"
-                        className="w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-2 py-3 text-xs focus:outline-none text-center"
-                      />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          required
+                          value={profHeightFt}
+                          onChange={(e) => setProfHeightFt(e.target.value)}
+                          placeholder="ft"
+                          className="w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-2 py-3 text-xs focus:outline-none text-center"
+                        />
+                        <input
+                          type="number"
+                          required
+                          value={profHeightIn}
+                          onChange={(e) => setProfHeightIn(e.target.value)}
+                          placeholder="in"
+                          className="w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-2 py-3 text-xs focus:outline-none text-center"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Goal & Injury Concerns */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Goal & Injury Concerns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Primary Goal</label>
+                    <select
+                      value={profGoal}
+                      onChange={(e) => setProfGoal(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-xs focus:outline-none"
+                    >
+                      <option value="Fat Loss + Endurance">Fat Loss + Endurance</option>
+                      <option value="Muscle Building">Muscle Building</option>
+                      <option value="Endurance Running">Endurance Running</option>
+                      <option value="General Health">General Health / Active Recovery</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Injury Concerns</label>
+                    <select
+                      value={profInjuries}
+                      onChange={(e) => setProfInjuries(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-xs focus:outline-none"
+                    >
+                      <option value="Shin/Calf Pain">Shin / Calf Pain</option>
+                      <option value="Knee Pain">Knee Pain</option>
+                      <option value="Lower Back Pain">Lower Back Pain</option>
+                      <option value="Shoulder Pain">Shoulder Pain</option>
+                      <option value="Ankle/Foot Pain">Ankle / Foot Pain</option>
+                      <option value="Elbow/Wrist Pain">Elbow / Wrist Pain</option>
+                      <option value="Hip/Groin Pain">Hip / Groin Pain</option>
+                      <option value="Neck/Upper Back Pain">Neck / Upper Back Pain</option>
+                      <option value="None">None - Fit & Pain-Free</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Activity Level */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Primary Goal</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Daily Activity Level</label>
                   <select
-                    value={profGoal}
-                    onChange={(e) => setProfGoal(e.target.value)}
+                    value={profActivity}
+                    onChange={(e) => setProfActivity(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-xs focus:outline-none"
                   >
-                    <option value="Fat Loss + Endurance">Fat Loss + Endurance</option>
-                    <option value="Muscle Building">Muscle Building</option>
-                    <option value="Endurance Running">Endurance Running</option>
-                    <option value="General Health">General Health / Active Recovery</option>
+                    <option value="sedentary">Sedentary (desk job, low physical activity)</option>
+                    <option value="light">Light Active (daily walks, active standing)</option>
+                    <option value="moderate">Moderately Active (workouts 3-5 days/week)</option>
+                    <option value="active">Very Active (heavy workouts 6-7 days/week)</option>
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Injury Concerns</label>
-                  <select
-                    value={profInjuries}
-                    onChange={(e) => setProfInjuries(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-xs focus:outline-none"
-                  >
-                    <option value="Shin/Calf Pain">Shin / Calf Pain</option>
-                    <option value="Knee Pain">Knee Pain</option>
-                    <option value="Lower Back Pain">Lower Back Pain</option>
-                    <option value="Shoulder Pain">Shoulder Pain</option>
-                    <option value="Ankle/Foot Pain">Ankle / Foot Pain</option>
-                    <option value="Elbow/Wrist Pain">Elbow / Wrist Pain</option>
-                    <option value="Hip/Groin Pain">Hip / Groin Pain</option>
-                    <option value="Neck/Upper Back Pain">Neck / Upper Back Pain</option>
-                    <option value="None">None - Fit & Pain-Free</option>
-                  </select>
-                </div>
-              </div>
 
-              {/* Activity Level */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Daily Activity Level</label>
-                <select
-                  value={profActivity}
-                  onChange={(e) => setProfActivity(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-xs focus:outline-none"
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/10 cursor-pointer text-xs uppercase tracking-wider"
                 >
-                  <option value="sedentary">Sedentary (desk job, low physical activity)</option>
-                  <option value="light">Light Active (daily walks, active standing)</option>
-                  <option value="moderate">Moderately Active (workouts 3-5 days/week)</option>
-                  <option value="active">Very Active (heavy workouts 6-7 days/week)</option>
-                </select>
-              </div>
+                  Save Settings Updates
+                </button>
 
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/10 cursor-pointer text-xs uppercase tracking-wider"
-              >
-                Save Settings Updates
-              </button>
-
-            </form>
-          </div>
-        )}
+              </form>
+            </div>
+          )}
+        </Suspense>
       </main>
 
     </div>
