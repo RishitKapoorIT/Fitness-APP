@@ -104,7 +104,7 @@ export default function Auth() {
             <Activity className="h-5 w-5" />
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            Fitness Hub
+            RecoverFit
           </h2>
           <p className="text-slate-400 text-sm">
             {isSignUp ? 'Create your smart fitness & recovery profile' : 'Welcome back! Let\'s hit your goals today.'}

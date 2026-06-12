@@ -211,6 +211,160 @@ const EXERCISES_DATA = [
   }
 ];
 
+function ExerciseAnimation({ name }) {
+  let svgContent = null;
+
+  if (name === "Bodyweight Squats") {
+    svgContent = (
+      <svg viewBox="0 0 100 80" className="w-24 h-24 text-blue-500">
+        <style>{`
+          @keyframes squat {
+            0%, 100% { transform: translateY(0px) scaleY(1); }
+            50% { transform: translateY(18px) scaleY(0.7); }
+          }
+          .squat-hip {
+            animation: squat 3s ease-in-out infinite;
+            transform-origin: 50px 70px;
+          }
+        `}</style>
+        <line x1="10" y1="70" x2="90" y2="70" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+        <g className="squat-hip">
+          <circle cx="50" cy="20" r="6" fill="#60a5fa" />
+          <line x1="50" y1="26" x2="50" y2="45" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" />
+          <line x1="50" y1="30" x2="70" y2="30" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="50" y1="45" x2="62" y2="55" stroke="#3b82f6" strokeWidth="3.5" strokeLinecap="round" />
+          <line x1="62" y1="55" x2="62" y2="70" stroke="#2563eb" strokeWidth="3.5" strokeLinecap="round" />
+        </g>
+      </svg>
+    );
+  } else if (name === "Calf Raises") {
+    svgContent = (
+      <svg viewBox="0 0 100 80" className="w-24 h-24 text-blue-500">
+        <style>{`
+          @keyframes raise {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-12deg); }
+          }
+          .foot-pivot {
+            animation: raise 2s ease-in-out infinite;
+            transform-origin: 20px 65px;
+          }
+        `}</style>
+        <line x1="10" y1="65" x2="90" y2="65" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+        <g className="foot-pivot">
+          <line x1="45" y1="20" x2="45" y2="55" stroke="#3b82f6" strokeWidth="4.5" strokeLinecap="round" />
+          <line x1="45" y1="55" x2="20" y2="65" stroke="#2563eb" strokeWidth="5.5" strokeLinecap="round" />
+        </g>
+      </svg>
+    );
+  } else if (name === "Glute Bridges") {
+    svgContent = (
+      <svg viewBox="0 0 100 80" className="w-24 h-24 text-blue-500">
+        <style>{`
+          @keyframes bridge {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-16px); }
+          }
+          .hip-lift {
+            animation: bridge 2.5s ease-in-out infinite;
+            transform-origin: 50px 50px;
+          }
+        `}</style>
+        <line x1="10" y1="65" x2="90" y2="65" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="25" cy="60" r="5" fill="#60a5fa" />
+        <g className="hip-lift">
+          <line x1="25" y1="60" x2="55" y2="60" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
+          <line x1="55" y1="60" x2="70" y2="45" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
+        </g>
+        <line x1="70" y1="45" x2="70" y2="65" stroke="#2563eb" strokeWidth="4" strokeLinecap="round" />
+      </svg>
+    );
+  } else if (name === "Push-ups") {
+    svgContent = (
+      <svg viewBox="0 0 100 80" className="w-24 h-24 text-blue-500">
+        <style>{`
+          @keyframes pushup {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(15deg); }
+          }
+          .body-plank {
+            animation: pushup 2.5s ease-in-out infinite;
+            transform-origin: 75px 60px;
+          }
+        `}</style>
+        <line x1="10" y1="65" x2="90" y2="65" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+        <line x1="30" y1="65" x2="30" y2="50" stroke="#1e293b" strokeWidth="2" />
+        <g className="body-plank">
+          <circle cx="20" cy="35" r="5" fill="#60a5fa" />
+          <line x1="20" y1="35" x2="75" y2="60" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
+        </g>
+      </svg>
+    );
+  } else if (name === "Plank") {
+    svgContent = (
+      <svg viewBox="0 0 100 80" className="w-24 h-24 text-blue-500">
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; stroke-width: 5; }
+          }
+          .plank-core {
+            animation: pulse 2s ease-in-out infinite;
+          }
+        `}</style>
+        <line x1="10" y1="65" x2="90" y2="65" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+        <line x1="30" y1="65" x2="30" y2="52" stroke="#475569" strokeWidth="3" />
+        <line x1="75" y1="65" x2="75" y2="58" stroke="#475569" strokeWidth="3" />
+        <line x1="25" y1="52" x2="78" y2="52" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" className="plank-core" />
+        <circle cx="20" cy="52" r="4.5" fill="#60a5fa" />
+      </svg>
+    );
+  } else if (name === "Bicep Curls") {
+    svgContent = (
+      <svg viewBox="0 0 100 80" className="w-24 h-24 text-blue-500">
+        <style>{`
+          @keyframes curl {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-95deg); }
+          }
+          .forearm {
+            animation: curl 2.2s ease-in-out infinite;
+            transform-origin: 35px 50px;
+          }
+        `}</style>
+        <line x1="35" y1="15" x2="35" y2="50" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round" />
+        <g className="forearm">
+          <line x1="35" y1="50" x2="65" y2="50" stroke="#3b82f6" strokeWidth="4.5" strokeLinecap="round" />
+          <circle cx="65" cy="50" r="4.5" fill="#f59e0b" />
+        </g>
+      </svg>
+    );
+  } else {
+    svgContent = (
+      <svg viewBox="0 0 100 80" className="w-24 h-24 text-slate-650">
+        <style>{`
+          @keyframes pulseWave {
+            0%, 100% { stroke-dashoffset: 0; }
+            50% { stroke-dashoffset: 20; }
+          }
+          .pulse-path {
+            stroke-dasharray: 6 3;
+            animation: pulseWave 4s linear infinite;
+          }
+        `}</style>
+        <rect x="15" y="15" width="70" height="50" rx="10" fill="none" stroke="#334155" strokeWidth="1.5" />
+        <path d="M 25 40 L 38 40 L 43 25 L 48 55 L 53 40 L 75 40" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="pulse-path" />
+      </svg>
+    );
+  }
+
+  return (
+    <div className="bg-slate-950 rounded-2xl p-2 border border-slate-850 flex items-center justify-center shrink-0 w-28 h-28 self-center sm:self-start">
+      {svgContent}
+    </div>
+  );
+}
+
 export default function ExerciseLibrary() {
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('All');
@@ -264,26 +418,31 @@ export default function ExerciseLibrary() {
           filtered.map((ex, idx) => (
             <div key={idx} className="bg-slate-900 border border-slate-850 hover:border-slate-800 p-5 rounded-3xl space-y-4 transition-all flex flex-col justify-between">
               
-              <div className="space-y-2">
-                {/* Title and Badges */}
-                <div className="flex justify-between items-start gap-2">
-                  <h3 className="font-extrabold text-base text-slate-100">{ex.name}</h3>
-                  <div className="flex gap-1 shrink-0">
-                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-slate-950 text-slate-400 border border-slate-850">
-                      {ex.category}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${ex.impact === 'Low Impact' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                      {ex.impact}
-                    </span>
+              <div className="flex flex-col sm:flex-row gap-4 justify-between items-start">
+                <div className="space-y-2 flex-1">
+                  {/* Title and Badges */}
+                  <div className="flex justify-between items-start gap-2">
+                    <h3 className="font-extrabold text-base text-slate-100">{ex.name}</h3>
+                    <div className="flex gap-1 shrink-0">
+                      <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-slate-950 text-slate-400 border border-slate-850">
+                        {ex.category}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${ex.impact === 'Low Impact' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                        {ex.impact}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="text-[10px] text-slate-500 font-bold uppercase">
-                  Target: <span className="text-slate-300 font-normal">{ex.target}</span> · Difficulty: <span className="text-slate-300 font-normal">{ex.difficulty}</span>
-                </div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase">
+                    Target: <span className="text-slate-300 font-normal">{ex.target}</span> · Difficulty: <span className="text-slate-300 font-normal">{ex.difficulty}</span>
+                  </div>
 
-                {/* Tips */}
-                <p className="text-xs text-slate-400 leading-relaxed pt-1">{ex.tips}</p>
+                  {/* Tips */}
+                  <p className="text-xs text-slate-400 leading-relaxed pt-1">{ex.tips}</p>
+                </div>
+                
+                {/* Visual Form Guide */}
+                <ExerciseAnimation name={ex.name} />
               </div>
 
               {/* Joint Safety Panel */}

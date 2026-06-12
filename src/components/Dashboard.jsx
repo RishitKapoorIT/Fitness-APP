@@ -21,7 +21,11 @@ import {
   TrendingUp,
   Heart,
   Plus,
-  Undo
+  Undo,
+  Flame,
+  Award,
+  Lock,
+  Sparkles
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -39,9 +43,9 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
   const [localLogs, setLocalLogs] = useState(() => {
     try {
       const saved = localStorage.getItem(`fitness_logs_${user?.id}`);
-      return saved ? JSON.parse(saved) : { recovery: {}, water: {}, weight: [] };
+      return saved ? JSON.parse(saved) : { recovery: {}, water: {}, weight: [], workouts: {} };
     } catch {
-      return { recovery: {}, water: {}, weight: [] };
+      return { recovery: {}, water: {}, weight: [], workouts: {} };
     }
   });
 
@@ -64,15 +68,171 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
   const [todayWater, setTodayWater] = useState(0.0);
   const [weightHistory, setWeightHistory] = useState([]);
 
+  // Streaks, Achievements and Weekly analytics states
+  const [streaks, setStreaks] = useState({ workout: 0, water: 0, recovery: 0 });
+  const [weeklySummary, setWeeklySummary] = useState({
+    workoutsCount: 0,
+    weightChange: 0,
+    waterCompliance: 0,
+    avgRecovery: 0
+  });
+  const [achievements, setAchievements] = useState([]);
+
+  const computeMetrics = (recoveryList = [], waterList = [], workoutList = [], weightList = []) => {
+    const today = new Date();
+    const formatDate = (d) => d.toISOString().split('T')[0];
+
+    const getPastDateStr = (daysAgo) => {
+      const d = new Date();
+      d.setDate(d.getDate() - daysAgo);
+      return formatDate(d);
+    };
+
+    const recoveryMap = {};
+    recoveryList.forEach(r => { if (r && r.date) recoveryMap[r.date] = r; });
+
+    const waterMap = {};
+    waterList.forEach(w => { if (w && w.date) waterMap[w.date] = w.amount_liters; });
+
+    const workoutMap = {};
+    workoutList.forEach(w => { if (w && w.date) workoutMap[w.date] = w; });
+
+    const calculateStreak = (checkFn) => {
+      let streak = 0;
+      let currDaysAgo = 0;
+      
+      const todayStr = getPastDateStr(0);
+      const yesterdayStr = getPastDateStr(1);
+      
+      if (!checkFn(todayStr) && !checkFn(yesterdayStr)) {
+        return 0;
+      }
+      
+      if (!checkFn(todayStr) && checkFn(yesterdayStr)) {
+        currDaysAgo = 1;
+      }
+
+      while (true) {
+        const dateStr = getPastDateStr(currDaysAgo);
+        if (checkFn(dateStr)) {
+          streak++;
+          currDaysAgo++;
+        } else {
+          break;
+        }
+      }
+      return streak;
+    };
+
+    const recoveryStreak = calculateStreak(date => !!recoveryMap[date]);
+    const waterGoal = profile?.water_goal_liters || 3.0;
+    const waterStreak = calculateStreak(date => (waterMap[date] || 0) >= waterGoal);
+    const workoutStreak = calculateStreak(date => !!workoutMap[date]);
+
+    // Weekly summary (last 7 days)
+    const last7DaysStr = Array.from({ length: 7 }, (_, i) => getPastDateStr(i));
+    let weeklyWorkouts = 0;
+    let weeklyWaterDays = 0;
+    let totalRecoveryScore = 0;
+    let recoveryDaysCount = 0;
+
+    last7DaysStr.forEach(date => {
+      if (workoutMap[date]) weeklyWorkouts++;
+      if ((waterMap[date] || 0) >= waterGoal) weeklyWaterDays++;
+      if (recoveryMap[date]) {
+        totalRecoveryScore += recoveryMap[date].recovery_score;
+        recoveryDaysCount++;
+      }
+    });
+
+    const avgRecovery = recoveryDaysCount > 0 ? Math.round(totalRecoveryScore / recoveryDaysCount) : 0;
+
+    // Weight change this week
+    let weightDiff = 0.0;
+    const sevenDaysAgoStr = getPastDateStr(7);
+    const recentWeights = weightList
+      .filter(w => w && w.date >= sevenDaysAgoStr)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (recentWeights.length > 1) {
+      const oldestWeight = recentWeights[0].weight;
+      const latestWeight = recentWeights[recentWeights.length - 1].weight;
+      weightDiff = latestWeight - oldestWeight;
+    }
+
+    // Achievements computation
+    const badges = [];
+    
+    const hasLog = recoveryList.length > 0;
+    badges.push({
+      id: 'first_step',
+      name: 'First Step',
+      desc: 'Log your first morning recovery score.',
+      unlocked: hasLog,
+      icon: 'Activity'
+    });
+
+    const metWaterGoalAtLeastOnce = waterList.some(w => w && w.amount_liters >= waterGoal);
+    badges.push({
+      id: 'h2o_champion',
+      name: 'H2O Champion',
+      desc: `Meet your daily ${waterGoal}L hydration goal.`,
+      unlocked: metWaterGoalAtLeastOnce,
+      icon: 'Droplet'
+    });
+
+    const hasWorkoutStreak = workoutStreak >= 3 || workoutList.length >= 3;
+    badges.push({
+      id: 'consistency',
+      name: 'Consistency Master',
+      desc: 'Complete 3 or more workouts in total.',
+      unlocked: hasWorkoutStreak,
+      icon: 'Award'
+    });
+
+    let coachOpened = false;
+    try {
+      coachOpened = localStorage.getItem('coach_consulted') === 'true';
+    } catch {}
+    badges.push({
+      id: 'mindful_athlete',
+      name: 'Mindful Athlete',
+      desc: 'Consult your AI Coach for guidance.',
+      unlocked: coachOpened,
+      icon: 'Sparkles'
+    });
+
+    const hasWeightEntry = weightList.length > 0;
+    badges.push({
+      id: 'weight_milestone',
+      name: 'Weight Tracker',
+      desc: 'Log your body weight for the first time.',
+      unlocked: hasWeightEntry,
+      icon: 'Scale'
+    });
+
+    setStreaks({ workout: workoutStreak, water: waterStreak, recovery: recoveryStreak });
+    setWeeklySummary({
+      workoutsCount: weeklyWorkouts,
+      weightChange: weightDiff,
+      waterCompliance: weeklyWaterDays,
+      avgRecovery: avgRecovery
+    });
+    setAchievements(badges);
+  };
+
   // Load daily logs
   useEffect(() => {
     if (!user) return;
 
     const loadData = async () => {
-      let userLocalLogs = { recovery: {}, water: {}, weight: [] };
+      let userLocalLogs = { recovery: {}, water: {}, weight: [], workouts: {} };
       try {
         const saved = localStorage.getItem(`fitness_logs_${user.id}`);
-        if (saved) userLocalLogs = JSON.parse(saved);
+        if (saved) {
+          userLocalLogs = JSON.parse(saved);
+          if (!userLocalLogs.workouts) userLocalLogs.workouts = {};
+        }
       } catch (err) {
         console.warn('Could not read user local logs:', err);
       }
@@ -100,6 +260,24 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
           .order('date', { ascending: true })
           .limit(10);
 
+        const { data: recList } = await supabase
+          .from('recovery_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
+
+        const { data: waterList } = await supabase
+          .from('water_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
+
+        const { data: workoutList } = await supabase
+          .from('workout_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
+
         if (recData) setTodayRecovery(recData);
         else if (userLocalLogs.recovery[todayStr]) setTodayRecovery(userLocalLogs.recovery[todayStr]);
 
@@ -122,18 +300,25 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
           setTodayWater(0.0);
         }
 
+        let finalWeights = [];
         if (wtData && wtData.length > 0) {
-          setWeightHistory(wtData.map(w => ({ date: w.date, weight: w.weight_kg })));
+          finalWeights = wtData.map(w => ({ date: w.date, weight: w.weight_kg }));
+          setWeightHistory(finalWeights);
         } else {
-          setWeightHistory(userLocalLogs.weight || []);
+          finalWeights = userLocalLogs.weight || [];
+          setWeightHistory(finalWeights);
         }
 
-        // Sync local logs with what we fetched from Supabase
+        const allRecovery = recList || Object.values(userLocalLogs.recovery);
+        const allWater = waterList || Object.entries(userLocalLogs.water).map(([date, amount]) => ({ date, amount_liters: amount }));
+        const allWorkouts = workoutList || Object.values(userLocalLogs.workouts || {});
+        computeMetrics(allRecovery, allWater, allWorkouts, finalWeights);
+
         const updatedLogs = { ...userLocalLogs };
         if (recData) updatedLogs.recovery[todayStr] = recData;
         updatedLogs.water[todayStr] = finalWater;
         if (wtData && wtData.length > 0) {
-          updatedLogs.weight = wtData.map(w => ({ date: w.date, weight: w.weight_kg }));
+          updatedLogs.weight = finalWeights;
         }
         setLocalLogs(updatedLogs);
         localStorage.setItem(`fitness_logs_${user.id}`, JSON.stringify(updatedLogs));
@@ -141,8 +326,13 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         console.warn('Using LocalStorage fallback for Dashboard:', err);
         if (userLocalLogs.recovery[todayStr]) setTodayRecovery(userLocalLogs.recovery[todayStr]);
         if (userLocalLogs.water[todayStr]) setTodayWater(userLocalLogs.water[todayStr]);
-        setWeightHistory(userLocalLogs.weight || []);
-        setLocalLogs(userLocalLogs);
+        const finalWeights = userLocalLogs.weight || [];
+        setWeightHistory(finalWeights);
+
+        const allRecovery = Object.values(userLocalLogs.recovery);
+        const allWater = Object.entries(userLocalLogs.water).map(([date, amount]) => ({ date, amount_liters: amount }));
+        const allWorkouts = Object.values(userLocalLogs.workouts || {});
+        computeMetrics(allRecovery, allWater, allWorkouts, finalWeights);
       }
     };
 
@@ -346,6 +536,37 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         )}
       </div>
 
+      {/* Streaks Widget */}
+      <div className="grid grid-cols-3 gap-4 p-4 bg-slate-900/60 border border-slate-850 rounded-2xl">
+        <div className="flex items-center gap-3 px-2 justify-center border-r border-slate-800/80">
+          <div className="h-10 w-10 rounded-xl bg-orange-600/10 flex items-center justify-center text-orange-400">
+            <Flame className="h-5 w-5 fill-current" />
+          </div>
+          <div className="text-left">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Workout Streak</div>
+            <div className="text-lg font-black text-slate-200">{streaks.workout} {streaks.workout === 1 ? 'day' : 'days'}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 px-2 justify-center border-r border-slate-800/80">
+          <div className="h-10 w-10 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-400">
+            <Flame className="h-5 w-5 fill-current" />
+          </div>
+          <div className="text-left">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Hydration Streak</div>
+            <div className="text-lg font-black text-slate-200">{streaks.water} {streaks.water === 1 ? 'day' : 'days'}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 px-2 justify-center">
+          <div className="h-10 w-10 rounded-xl bg-emerald-600/10 flex items-center justify-center text-emerald-400">
+            <Flame className="h-5 w-5 fill-current" />
+          </div>
+          <div className="text-left">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Check-in Streak</div>
+            <div className="text-lg font-black text-slate-200">{streaks.recovery} {streaks.recovery === 1 ? 'day' : 'days'}</div>
+          </div>
+        </div>
+      </div>
+
       {/* KPI Caloric Targets Grid (USA/Imperial & India/Metric) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Weight Card */}
@@ -412,6 +633,42 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
             {Math.round(tdee)} <span className="text-xs text-blue-500">kcal</span>
           </div>
           <div className="text-[10px] text-slate-500 mt-1">Calorie limit for maintenance</div>
+        </div>
+      </div>
+
+      {/* Weekly Progress Analytics */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+        <div className="flex justify-between items-center pb-2 border-b border-slate-850">
+          <h3 className="font-extrabold text-sm text-slate-200 uppercase tracking-wider">Weekly Progress Summary</h3>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Last 7 Days</span>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-slate-950/40 p-4 border border-slate-850 rounded-2xl space-y-1">
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block text-left">Workouts Logged</span>
+            <div className="text-xl font-extrabold text-slate-100 text-left">{weeklySummary.workoutsCount} Sessions</div>
+            <p className="text-[10px] text-slate-500 leading-none text-left">Target: 3+ per week</p>
+          </div>
+          <div className="bg-slate-950/40 p-4 border border-slate-850 rounded-2xl space-y-1">
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block text-left">Weight Change</span>
+            <div className={`text-xl font-extrabold text-left ${weeklySummary.weightChange < 0 ? 'text-green-400' : weeklySummary.weightChange > 0 ? 'text-blue-400' : 'text-slate-300'}`}>
+              {weeklySummary.weightChange < 0 
+                ? `${weeklySummary.weightChange.toFixed(1)} kg` 
+                : weeklySummary.weightChange > 0 
+                  ? `+${weeklySummary.weightChange.toFixed(1)} kg` 
+                  : 'Stable'}
+            </div>
+            <p className="text-[10px] text-slate-500 leading-none text-left">This week's progression</p>
+          </div>
+          <div className="bg-slate-950/40 p-4 border border-slate-850 rounded-2xl space-y-1">
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block text-left">Hydration Met</span>
+            <div className="text-xl font-extrabold text-slate-100 text-left">{weeklySummary.waterCompliance} / 7 Days</div>
+            <p className="text-[10px] text-slate-500 leading-none text-left">Met daily water goal</p>
+          </div>
+          <div className="bg-slate-950/40 p-4 border border-slate-850 rounded-2xl space-y-1">
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block text-left">Avg Recovery Score</span>
+            <div className="text-xl font-extrabold text-blue-400 text-left">{weeklySummary.avgRecovery}%</div>
+            <p className="text-[10px] text-slate-500 leading-none text-left">Readiness index average</p>
+          </div>
         </div>
       </div>
 
@@ -569,6 +826,57 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
           </div>
         </div>
 
+      </div>
+
+      {/* Achievements Milestones */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+        <div className="flex justify-between items-center pb-2 border-b border-slate-850">
+          <h3 className="font-extrabold text-sm text-slate-200 uppercase tracking-wider">Achievements & Milestones</h3>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Unlocked Badges</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {achievements.map(badge => {
+            const renderIcon = (name, active) => {
+              const cls = `h-6 w-6 ${active ? 'text-blue-400' : 'text-slate-650'}`;
+              if (name === 'Activity') return <Activity className={cls} />;
+              if (name === 'Droplet') return <Droplet className={cls} />;
+              if (name === 'Award') return <Award className={cls} />;
+              if (name === 'Sparkles') return <Sparkles className={cls} />;
+              if (name === 'Scale') return <Scale className={cls} />;
+              return <Award className={cls} />;
+            };
+
+            return (
+              <div 
+                key={badge.id}
+                className={`p-4 border rounded-2xl flex flex-col items-center text-center space-y-2 relative group transition-all duration-300 ${
+                  badge.unlocked 
+                    ? 'bg-slate-950/60 border-blue-900/30 shadow-md shadow-blue-500/5' 
+                    : 'bg-slate-950/10 border-slate-850 opacity-40'
+                }`}
+              >
+                {/* Badge Icon */}
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-105 ${
+                  badge.unlocked ? 'bg-blue-600/10 border border-blue-500/20' : 'bg-slate-900/80 border border-slate-850'
+                }`}>
+                  {badge.unlocked ? renderIcon(badge.icon, true) : <Lock className="h-5 w-5 text-slate-600" />}
+                </div>
+
+                <div>
+                  <h4 className="text-[11px] font-extrabold text-slate-200 leading-tight">{badge.name}</h4>
+                  <p className="text-[9px] text-slate-500 mt-1 leading-normal max-w-[110px] mx-auto">{badge.desc}</p>
+                </div>
+
+                {badge.unlocked && (
+                  <span className="absolute top-2 right-2 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* 1. MORNING RECOVERY CHECK-IN MODAL */}

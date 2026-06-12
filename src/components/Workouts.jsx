@@ -144,6 +144,40 @@ export default function Workouts() {
     setPlayerRunning(false);
   };
 
+  const handleFinishWorkout = async () => {
+    if (!user) return;
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    const payload = {
+      user_id: user.id,
+      date: todayStr,
+      workout_type: d?.type || 'General',
+      completed_exercises: activePlayerSteps.map(s => ({ name: s.name, timerSec: s.timerSec })),
+      duration_seconds: activePlayerSteps.reduce((acc, s) => acc + (s.timerSec || 0), 0),
+      recovery_score_at_time: recoveryScore
+    };
+
+    try {
+      await supabase.from('workout_logs').insert(payload);
+    } catch (err) {
+      console.error("Error inserting workout log:", err);
+    }
+
+    try {
+      const saved = localStorage.getItem(`fitness_logs_${user.id}`);
+      const logs = saved ? JSON.parse(saved) : { recovery: {}, water: {}, weight: [], workouts: {} };
+      if (!logs.workouts) logs.workouts = {};
+      logs.workouts[todayStr] = { type: d?.type || 'General', date: todayStr };
+      localStorage.setItem(`fitness_logs_${user.id}`, JSON.stringify(logs));
+    } catch (e) {
+      console.error("Error saving local workout log:", e);
+    }
+
+    setActivePlayerSteps(null);
+    setPlayerRunning(false);
+    alert("Congratulations! Workout completed and logged.");
+  };
+
   const handleNextStep = () => {
     if (!activePlayerSteps) return;
     if (currentPlayerStepIdx < activePlayerSteps.length - 1) {
@@ -429,6 +463,7 @@ export default function Workouts() {
           setIsRunning={setPlayerRunning}
           timeLeft={playerTimeLeft}
           elapsed={playerElapsed}
+          onFinish={handleFinishWorkout}
         />
       )}
 
@@ -822,7 +857,8 @@ function WorkoutPlayerModal({
   isRunning,
   setIsRunning,
   timeLeft,
-  elapsed
+  elapsed,
+  onFinish
 }) {
   const step = steps[activeIdx];
   const total = steps.length;
@@ -960,10 +996,13 @@ function WorkoutPlayerModal({
               <span className="text-[10px] text-slate-500 font-semibold">{nextStep.timerSec > 0 ? `${formatTime(nextStep.timerSec)}` : 'Reps'}</span>
             </div>
           ) : (
-            <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl text-center text-xs text-emerald-400 font-bold flex items-center justify-center gap-1.5">
-              <CheckCircle className="h-4 w-4" />
-              Final Step of Workout!
-            </div>
+            <button
+              onClick={onFinish}
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-bold shadow-lg shadow-emerald-500/10 transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-emerald-500/20"
+            >
+              <CheckCircle className="h-4.5 w-4.5 text-emerald-100" />
+              Finish & Log Workout
+            </button>
           )}
         </div>
 

@@ -66,7 +66,7 @@ export default function LandingPage({ onGetStarted }) {
             <span className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/15">
               <Activity className="h-4.5 w-4.5" />
             </span>
-            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">Fitness Hub</span>
+            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">RecoverFit</span>
           </div>
           <button
             onClick={onGetStarted}
@@ -382,7 +382,7 @@ export default function LandingPage({ onGetStarted }) {
             <span className="hover:text-white transition-colors cursor-pointer">Terms & Conditions</span>
             <span className="hover:text-white transition-colors cursor-pointer">Support</span>
           </div>
-          <p>© 2026 Fitness Hub. Customized for Rishit Kapoor. Standalone MVP.</p>
+          <p>© 2026 RecoverFit. Customized for Rishit Kapoor. Standalone MVP.</p>
           <div className="text-[10px] text-slate-600 font-mono italic">
             Consistency for 6 months &gt; Intensity for 10 days
           </div>

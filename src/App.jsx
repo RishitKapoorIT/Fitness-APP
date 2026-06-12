@@ -182,7 +182,7 @@ function AppContent() {
               <span className="h-8 w-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/10">
                 <Activity className="h-4 w-4" />
               </span>
-              <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">Fitness Hub</span>
+              <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">RecoverFit</span>
             </div>
             
             <div className="flex items-center gap-2">
@@ -216,6 +216,11 @@ function AppContent() {
                   onClick={() => {
                     setActiveTab(item.id);
                     setShowMobileMenu(false);
+                    if (item.id === 'coach') {
+                      try {
+                        localStorage.setItem('coach_consulted', 'true');
+                      } catch (e) {}
+                    }
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     isActive
