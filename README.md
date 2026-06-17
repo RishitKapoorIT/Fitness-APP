@@ -88,3 +88,16 @@ npm run build
 
 ## Security Hardening
 All tables utilize Postgres Row-Level Security (RLS) to ensure users can only read or write their own private logs. The auth trigger function execution has been secured against public role RPC invocation attacks and restricted to secure database paths.
+
+---
+
+## Recent Enhancements
+
+*   **Dynamic Onboarding Engine**: Re-engineered database trigger functions and onboarding flows to parse user-entered signup metadata dynamically, eliminating hardcoded profile templates.
+*   **Complete Profile Isolation**: Sanitized all frontend fallbacks and default states. Every new user begins with a generic dashboard setup and clean registration form inputs, preventing any diagnostic or metric leaks between accounts.
+*   **Mobile UX/UI Optimization**:
+    *   **Viewport-Adaptive Modals**: Redesigned the *Workout Player* and *Countdown Timer* modal cards with height constraints (`max-h-[92vh]`) and vertical scroll containment (`overflow-y-auto`) to prevent UI overflow on smaller phone screens.
+    *   **Responsive Vector Scales**: Circular timers and countdown clock rings scale down dynamically from `h-44` to `h-32` on narrow viewports.
+    *   **Touch-Friendly Action Stacking**: Control blocks and action triggers stack vertically with equal-width grid buttons on mobile viewports for easy thumb access.
+    *   **Layout Reflows**: Dashboard stats grids and streak widgets transition smoothly between horizontal grids (desktop) and border-separated vertical columns (mobile).
+
