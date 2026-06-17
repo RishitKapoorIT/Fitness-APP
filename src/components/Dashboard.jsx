@@ -36,7 +36,7 @@ import {
   Tooltip
 } from 'recharts';
 
-export default function Dashboard({ onStartWorkout, setActiveTab }) {
+export default function Dashboard({ onStartWorkout }) {
   const { user, profile, updateProfile } = useAuth();
   
   // Local fallbacks if Supabase is offline/not connected
@@ -81,7 +81,6 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
   const [achievements, setAchievements] = useState([]);
 
   const computeMetrics = (recoveryList = [], waterList = [], workoutList = [], weightList = []) => {
-    const today = new Date();
     const formatDate = (d) => d.toISOString().split('T')[0];
 
     const getPastDateStr = (daysAgo) => {
@@ -114,13 +113,14 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         currDaysAgo = 1;
       }
 
-      while (true) {
+      let continues = true;
+      while (continues) {
         const dateStr = getPastDateStr(currDaysAgo);
         if (checkFn(dateStr)) {
           streak++;
           currDaysAgo++;
         } else {
-          break;
+          continues = false;
         }
       }
       return streak;
@@ -195,7 +195,9 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
     let coachOpened = false;
     try {
       coachOpened = localStorage.getItem('coach_consulted') === 'true';
-    } catch {}
+    } catch (e) {
+      console.warn("Local storage check failed:", e);
+    }
     badges.push({
       id: 'mindful_athlete',
       name: 'Mindful Athlete',
@@ -354,6 +356,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
     };
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, todayStr]);
 
   // Sync recovery input fields when today's record updates or loads
@@ -710,7 +713,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
                   ? `+${weeklySummary.weightChange.toFixed(1)} kg` 
                   : 'Stable'}
             </div>
-            <p className="text-[10px] text-slate-500 leading-none text-left">This week's progression</p>
+            <p className="text-[10px] text-slate-500 leading-none text-left">This week&apos;s progression</p>
           </div>
           <div className="bg-slate-950/40 p-4 border border-slate-850 rounded-2xl space-y-1">
             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block text-left">Hydration Met</span>
@@ -796,7 +799,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
               <div className="md:col-span-7 flex flex-col justify-between h-full space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-extrabold text-slate-200 text-base">Today's Adaptive Plan</h3>
+                    <h3 className="font-extrabold text-slate-200 text-base">Today&apos;s Adaptive Plan</h3>
                     {todayWorkout && (
                       <span className="text-[9px] font-black bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md uppercase tracking-wider">
                         Completed
@@ -1143,7 +1146,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 space-y-6 shadow-2xl page-fade-in">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="font-extrabold text-lg">Log Today's Weight</h3>
+              <h3 className="font-extrabold text-lg">Log Today&apos;s Weight</h3>
               <button
                 onClick={() => setShowWeightModal(false)}
                 className="text-slate-400 hover:text-white text-sm"

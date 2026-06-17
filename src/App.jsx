@@ -58,7 +58,6 @@ function AppContent() {
   const [profHeightCm, setProfHeightCm] = useState('');
   const [profHeightFt, setProfHeightFt] = useState('');
   const [profHeightIn, setProfHeightIn] = useState('');
-  const [isProfFormLoaded, setIsProfFormLoaded] = useState(false);
 
   // Initialize profile form values when entering Settings tab
   const loadProfileToForm = () => {
@@ -80,7 +79,6 @@ function AppContent() {
       setProfWeight(profile.weight_kg.toString());
       setProfHeightCm(profile.height_cm.toString());
     }
-    setIsProfFormLoaded(true);
   };
 
   const handleProfileUpdateSubmit = async (e) => {
@@ -236,7 +234,7 @@ function AppContent() {
                     if (item.id === 'coach') {
                       try {
                         localStorage.setItem('coach_consulted', 'true');
-                      } catch (e) {}
+                      } catch (e) { console.warn(e); }
                     }
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${

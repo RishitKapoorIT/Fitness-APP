@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../supabaseClient';
 
 import { BASE_DAYS_PLAN, BADGE_THEMES, getAdaptiveDayPlan } from '../utils/workoutPlanner';
-import { Play, Pause, RotateCcw, CheckCircle, AlertCircle, Info, Heart, ArrowRight, Minimize2, Maximize2, Calendar, ChevronRight } from 'lucide-react';
+import { Play, CheckCircle, AlertCircle, Info, Heart, ArrowRight, Minimize2, Maximize2, Calendar } from 'lucide-react';
 
 export default function Workouts({ setActiveTab }) {
   const { user, profile } = useAuth();
@@ -269,7 +269,7 @@ export default function Workouts({ setActiveTab }) {
             </div>
             <div>
               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Workout Session Player</div>
-              <div className="text-base font-extrabold text-slate-200 mt-0.5">Ready to start today's routine?</div>
+              <div className="text-base font-extrabold text-slate-200 mt-0.5">Ready to start today&apos;s routine?</div>
               <p className="text-[11px] text-slate-400">Play the routine to track your walk/jog intervals and rest periods automatically.</p>
             </div>
           </div>
@@ -566,6 +566,7 @@ function TimerModal({ ex, onClose }) {
     }
 
     return () => clearInterval(timerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, setNum]);
 
   const handleWorkEnd = () => {

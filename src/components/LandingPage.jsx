@@ -140,7 +140,7 @@ export default function LandingPage({ onGetStarted }) {
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-bold text-slate-400 flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                    Today's Plan:
+                    Today&apos;s Plan:
                   </span>
                   <span className="text-blue-400 font-semibold">Interval Walk/Jog</span>
                 </div>

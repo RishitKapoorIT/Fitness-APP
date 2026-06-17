@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../supabaseClient';
-import { MessageSquare, Send, Sparkles, AlertTriangle, CornerDownLeft } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, AlertTriangle } from 'lucide-react';
 
 export default function AICoach() {
   const { profile } = useAuth();

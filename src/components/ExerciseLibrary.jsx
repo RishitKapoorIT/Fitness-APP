@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Heart, Info, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Search, ShieldCheck } from 'lucide-react';
 
 const EXERCISES_DATA = [
   {
