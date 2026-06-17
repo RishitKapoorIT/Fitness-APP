@@ -100,4 +100,11 @@ All tables utilize Postgres Row-Level Security (RLS) to ensure users can only re
     *   **Responsive Vector Scales**: Circular timers and countdown clock rings scale down dynamically from `h-44` to `h-32` on narrow viewports.
     *   **Touch-Friendly Action Stacking**: Control blocks and action triggers stack vertically with equal-width grid buttons on mobile viewports for easy thumb access.
     *   **Layout Reflows**: Dashboard stats grids and streak widgets transition smoothly between horizontal grids (desktop) and border-separated vertical columns (mobile).
+*   **Dashboard Personalization & Auto-Sync**:
+    *   **Dynamic Morning Greetings**: Implemented dynamic time-of-day greetings ("Good morning, [Name] 👋") coupled with live weekly workout completed counts and streak stats.
+    *   **Recovery Hero Dial**: Replaced static metrics text with a premium circular SVG recovery readiness dial that dynamically scales and colors based on green/yellow/red recovery readiness zone guidelines.
+    *   **Vibrant Card Entrance Animations**: Implemented CSS keyframe transitions to fade-up components as the user navigates, making the transition feel extremely premium.
+    *   **Session Auto-Play & Sync Redirection**: Integrated a sessionStorage state machine allowing users to launch the timer player instantly upon tab switch. After completing the workout, the system logs the session to Supabase, updates local storage, auto-redirects the user back to the dashboard, and shows a green "Workout Completed" banner.
+    *   **Interactive Skeleton Loaders**: Implemented loading shimmers for dashboard grids, welcome bars, and charts to prevent flash-of-unstyled-content (FOUC) and visual layout shifts (CLS) when database requests resolve.
+    *   **Calf/Shin pain safety guide integration**: Injury profile configurations seamlessly adapt workout volumes in real time, shifting strain vectors away from high-impact movements when active.
 

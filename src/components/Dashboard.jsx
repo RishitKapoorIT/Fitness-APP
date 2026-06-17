@@ -67,6 +67,8 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
   const [todayRecovery, setTodayRecovery] = useState(null);
   const [todayWater, setTodayWater] = useState(0.0);
   const [weightHistory, setWeightHistory] = useState([]);
+  const [todayWorkout, setTodayWorkout] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Streaks, Achievements and Weekly analytics states
   const [streaks, setStreaks] = useState({ workout: 0, water: 0, recovery: 0 });
@@ -314,6 +316,16 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         const allWorkouts = workoutList || Object.values(userLocalLogs.workouts || {});
         computeMetrics(allRecovery, allWater, allWorkouts, finalWeights);
 
+        // Find today's workout log
+        let finalWorkout = null;
+        if (workoutList && workoutList.length > 0) {
+          finalWorkout = workoutList.find(w => w.date === todayStr) || null;
+        }
+        if (!finalWorkout && userLocalLogs.workouts[todayStr]) {
+          finalWorkout = userLocalLogs.workouts[todayStr];
+        }
+        setTodayWorkout(finalWorkout);
+
         const updatedLogs = { ...userLocalLogs };
         if (recData) updatedLogs.recovery[todayStr] = recData;
         updatedLogs.water[todayStr] = finalWater;
@@ -333,6 +345,11 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         const allWater = Object.entries(userLocalLogs.water).map(([date, amount]) => ({ date, amount_liters: amount }));
         const allWorkouts = Object.values(userLocalLogs.workouts || {});
         computeMetrics(allRecovery, allWater, allWorkouts, finalWeights);
+
+        const finalWorkout = userLocalLogs.workouts[todayStr] || null;
+        setTodayWorkout(finalWorkout);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -491,49 +508,85 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
 
   const recoveryZone = todayRecovery ? getRecoveryZone(todayRecovery.recovery_score) : null;
 
+  // Get dynamic greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+  const greeting = getGreeting();
+
+  if (loading) {
+    return (
+      <div className="space-y-6 text-left animate-pulse p-4">
+        {/* Top Welcome Bar Skeleton */}
+        <div className="h-28 bg-slate-900 border border-slate-800 rounded-3xl p-6 flex items-center justify-between">
+          <div className="space-y-2 w-1/3">
+            <div className="h-6 bg-slate-805/80 rounded w-3/4"></div>
+            <div className="h-4 bg-slate-805/80 rounded w-1/2"></div>
+          </div>
+          <div className="h-10 bg-slate-805/80 rounded w-32"></div>
+        </div>
+
+        {/* Streaks Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-900/60 border border-slate-850 rounded-2xl">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-3 justify-center py-2">
+              <div className="h-10 w-10 bg-slate-805/80 rounded-xl"></div>
+              <div className="space-y-1.5 w-1/2">
+                <div className="h-3 bg-slate-805/80 rounded"></div>
+                <div className="h-4 bg-slate-805/80 rounded w-2/3"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Main Grid Skeletons */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7 space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 h-64"></div>
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 h-64"></div>
+          </div>
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 h-96"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 page-fade-in text-left">
       
       {/* Top Welcome Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-slate-900 border border-slate-800 rounded-3xl relative overflow-hidden">
-        <div className="space-y-1 relative z-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-slate-900 border border-slate-800 rounded-3xl relative overflow-hidden page-fade-in">
+        <div className="space-y-1.5 relative z-10">
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-            Hi, {profile?.name || 'Athlete'}!
+            {greeting}, {profile?.name || 'Athlete'}! 👋
           </h1>
-          <p className="text-slate-400 text-xs flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5" />
-            Track for {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+          <p className="text-slate-400 text-xs flex flex-wrap items-center gap-x-2 gap-y-1">
+            <Calendar className="h-3.5 w-3.5 text-blue-500" />
+            <span>Today is {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+            <span className="text-slate-650">•</span>
+            <span className="text-blue-400 font-bold">{weeklySummary.workoutsCount} Workouts completed this week</span>
+            {streaks.workout > 0 && (
+              <>
+                <span className="text-slate-600">•</span>
+                <span className="text-orange-400 font-bold">{streaks.workout} Day Streak 🔥</span>
+              </>
+            )}
           </p>
         </div>
         
-        {/* Recovery Score CTA */}
-        {!todayRecovery ? (
-          <button
-            onClick={() => setShowRecoveryModal(true)}
-            className="relative z-10 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 px-5 rounded-2xl transition-all shadow-lg shadow-blue-500/10 flex items-center gap-2 cursor-pointer uppercase tracking-wider"
-          >
-            <Activity className="h-4 w-4" />
-            Log Morning Recovery
-          </button>
-        ) : (
-          <div className="flex items-center gap-2 relative z-10">
-            <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl border ${recoveryZone.bg} ${recoveryZone.border}`}>
-              <div className="h-10 w-10 rounded-xl bg-slate-950 flex items-center justify-center font-black text-lg text-white">
-                {todayRecovery.recovery_score}
-              </div>
-              <div>
-                <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Recovery Readiness</div>
-                <div className={`text-xs font-bold ${recoveryZone.color}`}>{recoveryZone.label}</div>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowRecoveryModal(true)}
-              className="px-3.5 py-3 bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-2xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md"
-            >
-              Update
-            </button>
-          </div>
-        )}
+        {/* Quick check-in shortcut */}
+        <button
+          onClick={() => setShowRecoveryModal(true)}
+          className="relative z-10 bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white font-bold text-xs py-3 px-5 rounded-2xl transition-all shadow-md flex items-center gap-2 cursor-pointer uppercase tracking-wider"
+        >
+          <Activity className="h-4 w-4 text-blue-500" />
+          Update Recovery
+        </button>
       </div>
 
       {/* Streaks Widget */}
@@ -677,65 +730,176 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
         
         {/* Left Side: Today's Generated Workout & Soreness Guide */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <div className="flex justify-between items-center pb-3 border-b border-slate-850">
-              <h3 className="font-extrabold text-slate-200">Today's Adaptive Plan</h3>
-              {todayRecovery && (
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${recoveryZone.bg} ${recoveryZone.color}`}>
-                  {todayRecovery.recovery_score}% Recovered
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-sm font-semibold">
-                <span className="text-slate-300">Generated Routine:</span>
-                <span className="text-blue-400">
-                  {todayRecovery && todayRecovery.recovery_score < 40 ? 'Rest & Stretch Only' : 'Cardio & Strength mix'}
-                </span>
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 relative overflow-hidden page-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              
+              {/* Recovery Hero Circle Dial */}
+              <div className="md:col-span-5 flex flex-col items-center justify-center text-center p-4 bg-slate-950/40 border border-slate-850 rounded-2xl relative">
+                <div className="relative h-32 w-32 flex items-center justify-center rounded-full bg-slate-950 border-[6px] border-slate-850 shadow-inner">
+                  {todayRecovery ? (
+                    <>
+                      {/* SVG Progress Ring */}
+                      <svg className="absolute inset-0 transform -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="44" fill="none" stroke="#1e293b" strokeWidth="4" />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="44"
+                          fill="none"
+                          stroke={todayRecovery.recovery_score >= 75 ? '#10b981' : todayRecovery.recovery_score >= 45 ? '#eab308' : '#ef4444'}
+                          strokeWidth="5"
+                          strokeDasharray={276}
+                          strokeDashoffset={276 - (276 * (todayRecovery.recovery_score / 100))}
+                          strokeLinecap="round"
+                          className="transition-all duration-1000 linear"
+                        />
+                      </svg>
+                      <div className="text-center z-10 space-y-0.5">
+                        <div className="text-3xl font-black font-mono tracking-tight text-white">
+                          {todayRecovery.recovery_score}%
+                        </div>
+                        <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
+                          Recovery Score
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center z-10 p-3 space-y-1.5">
+                      <AlertTriangle className="h-6 w-6 text-blue-500 mx-auto animate-pulse" />
+                      <div className="text-[9px] font-extrabold text-blue-400 uppercase tracking-wider">
+                        Not Checked In
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {todayRecovery ? (
+                  <div className="mt-3 space-y-1 text-center">
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${recoveryZone.bg} ${recoveryZone.color}`}>
+                      {recoveryZone.label}
+                    </span>
+                    <p className="text-[9px] text-slate-400 max-w-[150px] leading-snug mx-auto">{recoveryZone.note}</p>
+                  </div>
+                ) : (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setShowRecoveryModal(true)}
+                      className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-[9px] py-1.5 px-3 rounded-lg transition-all shadow-md uppercase tracking-wider cursor-pointer"
+                    >
+                      Check In Now
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {profile?.injuries && profile.injuries !== 'None' && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-start gap-2.5">
-                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    <strong>{profile.injuries} Active</strong>: Your active workout plan has adapted automatically to swap out high-impact or aggravating strain vectors for safe training.
-                  </p>
-                </div>
-              )}
+              {/* Training Plan details */}
+              <div className="md:col-span-7 flex flex-col justify-between h-full space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-extrabold text-slate-200 text-base">Today's Adaptive Plan</h3>
+                    {todayWorkout && (
+                      <span className="text-[9px] font-black bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                        Completed
+                      </span>
+                    )}
+                  </div>
 
-              {todayRecovery && todayRecovery.recovery_score >= 40 && todayRecovery.recovery_score < 75 && (
-                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs rounded-xl flex items-start gap-2.5">
-                  <Heart className="h-4 w-4 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    <strong>Fatigue Detected (Readiness: {todayRecovery.recovery_score}%)</strong>: Total training volume has been scaled back by 30%. Focus on conversational pace.
-                  </p>
-                </div>
-              )}
+                  {todayWorkout ? (
+                    <div className="p-4 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl flex items-start gap-2.5">
+                      <Award className="h-5 w-5 shrink-0 text-emerald-400 fill-current animate-bounce" />
+                      <div className="space-y-1">
+                        <p className="font-bold text-slate-100 text-sm">Workout Completed!</p>
+                        <p className="leading-relaxed text-slate-300 text-[11px]">
+                          You logged a <strong>{todayWorkout.workout_type || todayWorkout.type || 'Adaptive'}</strong> workout session today. Great job staying consistent with your recovery plan!
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-xs font-semibold">
+                        <span className="text-slate-400">Generated Routine:</span>
+                        <span className="text-blue-400 font-extrabold text-sm">
+                          {!todayRecovery 
+                            ? 'Check in to see plan' 
+                            : todayRecovery.recovery_score < 40 
+                            ? 'Rest & Stretch Only' 
+                            : 'Cardio & Strength mix'}
+                        </span>
+                      </div>
 
-              <p className="text-xs text-slate-400 leading-relaxed">
-                {todayRecovery && todayRecovery.recovery_score < 40
-                  ? 'Your recovery is critical today. Overtraining on high-fatigue days delays weight loss goals and increases shin splints risk.'
-                  : 'Sufficient recovery score recorded. Workouts are configured specifically for fat loss and calf mobility.'}
-              </p>
+                      {profile?.injuries && profile.injuries !== 'None' && (
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-start gap-2.5">
+                          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                          <p className="leading-relaxed text-[11px]">
+                            <strong>{profile.injuries} Active</strong>: Swap out high-strain vectors for safe, low-impact exercise alternatives.
+                          </p>
+                        </div>
+                      )}
+
+                      {todayRecovery && todayRecovery.recovery_score >= 40 && todayRecovery.recovery_score < 75 && (
+                        <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs rounded-xl flex items-start gap-2.5">
+                          <Heart className="h-4 w-4 shrink-0 mt-0.5 animate-pulse" />
+                          <p className="leading-relaxed text-[11px] font-medium">
+                            <strong>Fatigue Warning ({todayRecovery.recovery_score}%)</strong>: Total training volume scaled back by 30%.
+                          </p>
+                        </div>
+                      )}
+
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        {!todayRecovery
+                          ? 'Start by submitting your morning questionnaire to compute your personalized training capacity.'
+                          : todayRecovery.recovery_score < 40
+                          ? 'Your recovery is critical today. Overtraining on high-fatigue days delays weight loss goals.'
+                          : 'Sufficient recovery score recorded. Workouts are configured specifically for fat loss and calf mobility.'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  {todayWorkout ? (
+                    <div className="flex gap-2">
+                      <div className="flex-1 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+                        <Flame className="h-4.5 w-4.5 fill-current text-emerald-400" />
+                        Workout Logged
+                      </div>
+                      <button
+                        onClick={onStartWorkout}
+                        className="px-4 py-3.5 bg-slate-950 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-2xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5"
+                      >
+                        Do Again
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      disabled={!todayRecovery}
+                      onClick={onStartWorkout}
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-40 disabled:pointer-events-none text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer text-xs uppercase tracking-wider"
+                    >
+                      {!todayRecovery ? 'Log Recovery First' : 'Start Adaptive Workout'}
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-
-            <button
-              onClick={onStartWorkout}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer text-xs uppercase tracking-wider mt-4"
-            >
-              Start Adaptive Workout
-              <ChevronRight className="h-4 w-4" />
-            </button>
           </div>
           
           {/* Weight Progress Chart */}
-          {weightHistory.length > 1 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 page-fade-in">
+            <div className="flex items-center justify-between">
               <h3 className="font-extrabold text-slate-200 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-blue-500" />
                 Weight Trend ({isMetric ? 'kg' : 'lbs'})
               </h3>
+              <button 
+                onClick={() => setShowWeightModal(true)}
+                className="text-[10px] font-bold text-blue-400 hover:text-white uppercase tracking-wider cursor-pointer bg-slate-950 border border-slate-850 hover:border-slate-800 px-3 py-1.5 rounded-xl transition-all"
+              >
+                + Log Weight
+              </button>
+            </div>
+            {weightHistory.length > 1 ? (
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
@@ -752,8 +916,16 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="h-48 flex flex-col items-center justify-center text-center p-4 bg-slate-950/25 border border-slate-850 rounded-2xl border-dashed">
+                <Scale className="h-8 w-8 text-slate-500 mb-2 animate-bounce" />
+                <p className="text-xs font-bold text-slate-350">⚖️ No Weight Logs Yet</p>
+                <p className="text-[10px] text-slate-500 max-w-[200px] leading-relaxed mt-1 mx-auto">
+                  Log your body weight over multiple days to unlock the trend visualization charts.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Side: Water Tracker */}

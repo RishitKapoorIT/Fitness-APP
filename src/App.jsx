@@ -303,12 +303,15 @@ function AppContent() {
         }>
           {activeTab === 'dashboard' && (
             <Dashboard
-              onStartWorkout={() => setActiveTab('workouts')}
+              onStartWorkout={() => {
+                sessionStorage.setItem('auto_play_workout', 'true');
+                setActiveTab('workouts');
+              }}
               setActiveTab={setActiveTab}
             />
           )}
           
-          {activeTab === 'workouts' && <Workouts />}
+          {activeTab === 'workouts' && <Workouts setActiveTab={setActiveTab} />}
           
           {activeTab === 'library' && <ExerciseLibrary />}
           

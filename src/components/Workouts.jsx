@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 import { BASE_DAYS_PLAN, BADGE_THEMES, getAdaptiveDayPlan } from '../utils/workoutPlanner';
 import { Play, Pause, RotateCcw, CheckCircle, AlertCircle, Info, Heart, ArrowRight, Minimize2, Maximize2, Calendar, ChevronRight } from 'lucide-react';
 
-export default function Workouts() {
+export default function Workouts({ setActiveTab }) {
   const { user, profile } = useAuth();
   
   // Set default tab to today's actual day of the week
@@ -176,6 +176,9 @@ export default function Workouts() {
     setActivePlayerSteps(null);
     setPlayerRunning(false);
     alert("Congratulations! Workout completed and logged.");
+    if (setActiveTab) {
+      setActiveTab('dashboard');
+    }
   };
 
   const handleNextStep = () => {
@@ -478,17 +481,17 @@ function ExerciseRow({ ex, onStartTimer }) {
   const hasTimer = ex.timerSec > 0 || ex.totalSets > 0;
 
   return (
-    <div className="flex items-center justify-between p-4 bg-slate-950 border border-slate-850 rounded-2xl hover:border-slate-800 transition-colors">
-      <div className="space-y-1.5">
-        <h4 className="text-xs font-bold text-slate-100">{ex.name}</h4>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-950 border border-slate-850 rounded-2xl hover:border-slate-800 transition-all gap-3">
+      <div className="space-y-1.5 flex-1 min-w-0">
+        <h4 className="text-xs font-bold text-slate-100 break-words">{ex.name}</h4>
         <div className="flex flex-wrap items-center gap-2">
           {ex.sets && !isRest && (
-            <span className="text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-md">
+            <span className="text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md shrink-0">
               {ex.sets} {ex.reps}
             </span>
           )}
           {ex.note && (
-            <span className="text-[10px] text-slate-500 font-medium">{ex.note}</span>
+            <span className="text-[10px] text-slate-500 font-medium break-words leading-relaxed">{ex.note}</span>
           )}
         </div>
       </div>
@@ -496,7 +499,7 @@ function ExerciseRow({ ex, onStartTimer }) {
       {!isRest && hasTimer && (
         <button
           onClick={onStartTimer}
-          className="bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white font-bold text-[10px] py-2 px-3.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+          className="w-full sm:w-auto text-center px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-xl shadow-md transition-all cursor-pointer uppercase tracking-wider whitespace-nowrap"
         >
           Track Set
         </button>
