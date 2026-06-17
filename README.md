@@ -1,6 +1,6 @@
 # Fitness Hub MVP
 
-A premium, responsive, and personalized **Fitness & Recovery Cockpit** built with Vite, React, Tailwind CSS v4, and Supabase. The app is designed to help you track daily health metrics, log morning recovery scores, generate customized workout schedules that adapt to calf/shin pain, and get real-time advice from an AI Fitness Coach.
+A premium, responsive, and personalised **Fitness & Recovery Cockpit** built with Vite, React, Tailwind CSS v4, and Supabase. The app is designed to help you track daily health metrics, log morning recovery scores, generate customised workout schedules that adapt to calf/shin pain, and get real-time advice from an AI Fitness Coach.
 
 ---
 
@@ -8,9 +8,9 @@ A premium, responsive, and personalized **Fitness & Recovery Cockpit** built wit
 
 *   **Dual-Unit Health Cockpit**: Automatically toggle between **India (Metric: kg/cm)** and **USA (Imperial: lbs/ft/in)** systems. Dynamically calculates BMI, BMR, and TDEE with descriptive medical tooltips.
 *   **Morning Readiness & Recovery Score**: Start each day with a recovery questionnaire scoring your readiness from 0-100% based on sleep, energy, and localized leg soreness.
-*   **Injury-Aware Workout Generator**: Adjusts training volume based on your recovery score. Substitutes high-impact running intervals for low-impact recovery walks and ankle mobility routines when pain points are active.
+*   **Injury-Aware Workout Generator**: Adjusts training volume based on your recovery score. Substitute high-impact running intervals for low-impact recovery walks and ankle mobility routines when pain points are active.
 *   **Workout Routine Timer Player**: Live sequential routine player with automated transitions, sound alerts, rest cycles, and minimization background tracking controls.
-*   **Context-Aware Gemini AI Coach**: Interactive assistant powered by **Gemini 1.5 Flash**. Automatically pre-loaded with your age, weight, target goals, and injury details for tailored safety guidance.
+*   **Context-Aware AI Coach**: Interactive assistant powered by **Gemini 1.5 Flash**. Automatically pre-loaded with your age, weight, target goals, and injury details for tailored safety guidance.
 *   **Progress Charts**: Graphical weight tracking charts powered by Recharts, showing goal progression and historical trends.
 *   **Water & Protein Trackers**: Seamlessly tracks daily hydration with self-healing offline sync and auto-calculates protein requirements based on target bodyweight.
 
