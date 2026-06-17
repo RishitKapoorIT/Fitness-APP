@@ -294,7 +294,7 @@ function AppContent() {
       </aside>
 
       {/* Main Workspace Frame */}
-      <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-5xl mx-auto w-full">
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto max-w-5xl mx-auto w-full">
         <Suspense fallback={
           <div className="flex flex-col items-center justify-center h-[calc(100vh-16rem)] w-full text-slate-400">
             <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />

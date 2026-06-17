@@ -224,33 +224,33 @@ export default function Workouts() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full md:w-auto gap-4">
+            <div className="flex sm:flex-col justify-between items-center sm:items-end w-full sm:w-auto pb-2 sm:pb-0 border-b sm:border-b-0 border-slate-800/60">
               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Time Remaining</div>
-              <div className="text-2xl font-black font-mono text-slate-100">
+              <div className="text-xl sm:text-2xl font-black font-mono text-slate-100">
                 {activePlayerSteps[currentPlayerStepIdx].timerSec > 0 
                   ? formatStopwatch(playerTimeLeft) 
                   : formatStopwatch(playerElapsed)}
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex w-full sm:w-auto gap-2">
               <button
                 onClick={() => setPlayerRunning(!playerRunning)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${playerRunning ? 'bg-amber-600/10 text-amber-500 border border-amber-500/20' : 'bg-blue-600 text-white shadow-blue-500/10'}`}
+                className={`flex-1 sm:flex-none text-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${playerRunning ? 'bg-amber-600/10 text-amber-500 border border-amber-500/20' : 'bg-blue-600 text-white shadow-blue-500/10'}`}
               >
                 {playerRunning ? 'Pause' : 'Resume'}
               </button>
               <button
                 onClick={handleNextStep}
                 disabled={currentPlayerStepIdx === activePlayerSteps.length - 1}
-                className="bg-slate-950 hover:bg-slate-850 border border-slate-800 disabled:opacity-45 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
+                className="flex-1 sm:flex-none text-center justify-center bg-slate-950 hover:bg-slate-850 border border-slate-800 disabled:opacity-45 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
               >
                 Skip
               </button>
               <button
                 onClick={() => setPlayerMinimized(false)}
-                className="bg-blue-600/15 border border-blue-500/20 hover:bg-blue-600/25 px-3.5 py-2.5 rounded-xl text-xs font-bold text-blue-400 transition-all cursor-pointer flex items-center gap-1"
+                className="flex-1 sm:flex-none text-center justify-center bg-blue-600/15 border border-blue-500/20 hover:bg-blue-600/25 px-3.5 py-2.5 rounded-xl text-xs font-bold text-blue-400 transition-all cursor-pointer flex items-center gap-1"
               >
                 <Maximize2 className="h-3.5 w-3.5" />
                 Maximize
@@ -598,8 +598,8 @@ function TimerModal({ ex, onClose }) {
   const strokeDashoffset = 282 * (1 - pct);
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-6 text-center space-y-6 shadow-2xl relative page-fade-in">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-3xl p-5 sm:p-6 text-center space-y-4 sm:space-y-6 shadow-2xl relative page-fade-in max-h-[92vh] overflow-y-auto">
         
         {/* Close Button */}
         <button
@@ -637,7 +637,7 @@ function TimerModal({ ex, onClose }) {
 
         {/* Timer Ring */}
         <div className="py-2 flex justify-center">
-          <div className="relative h-44 w-44 flex items-center justify-center rounded-full bg-slate-950 border-[6px] border-slate-850 shadow-inner">
+          <div className="relative h-32 w-32 md:h-44 md:w-44 flex items-center justify-center rounded-full bg-slate-950 border-[6px] border-slate-850 shadow-inner">
             <svg className="absolute inset-0 transform -rotate-90" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="45" fill="none" stroke="#1e293b" strokeWidth="4" />
               <circle
@@ -655,7 +655,7 @@ function TimerModal({ ex, onClose }) {
             </svg>
             
             <div className="text-center space-y-1">
-              <div className="text-3xl font-black font-mono tracking-tight text-white">
+              <div className="text-2xl md:text-3xl font-black font-mono tracking-tight text-white">
                 {phase === 'done' ? 'COMPLETE' : phase === 'rest' ? formatMinSec(restSec) : isCountdown ? formatMinSec(remainSec) : formatMinSec(elapsedSec)}
               </div>
               <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
@@ -873,8 +873,8 @@ function WorkoutPlayerModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative text-left page-fade-in">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl p-5 md:p-8 space-y-4 sm:space-y-6 shadow-2xl relative text-left page-fade-in max-h-[92vh] overflow-y-auto">
         
         {/* Top Header */}
         <div className="flex justify-between items-center pb-2">
@@ -915,8 +915,8 @@ function WorkoutPlayerModal({
         </div>
 
         {/* Content Body */}
-        <div className="py-6 flex flex-col items-center justify-center text-center space-y-4">
-          <h2 className="text-2xl md:text-3xl font-black text-slate-100 leading-tight">
+        <div className="py-3 sm:py-6 flex flex-col items-center justify-center text-center space-y-3 sm:space-y-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-100 leading-tight">
             {step.name}
           </h2>
           
@@ -926,7 +926,7 @@ function WorkoutPlayerModal({
 
           {/* Large Clock */}
           <div className="py-2">
-            <div className="relative h-44 w-44 flex items-center justify-center rounded-full bg-slate-950 border-[8px] border-slate-850 shadow-inner">
+            <div className="relative h-32 w-32 md:h-44 md:w-44 flex items-center justify-center rounded-full bg-slate-950 border-[8px] border-slate-850 shadow-inner">
               {step.timerSec > 0 && (
                 <svg className="absolute inset-0 transform -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="45" fill="none" stroke="#1e293b" strokeWidth="4" />
@@ -946,7 +946,7 @@ function WorkoutPlayerModal({
               )}
               
               <div className="text-center z-10">
-                <div className="text-4xl font-black font-mono tracking-tight text-slate-100">
+                <div className="text-3xl md:text-4xl font-black font-mono tracking-tight text-slate-100">
                   {step.timerSec > 0 ? formatTime(timeLeft) : formatTime(elapsed)}
                 </div>
                 <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">

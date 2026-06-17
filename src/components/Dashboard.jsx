@@ -537,8 +537,8 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
       </div>
 
       {/* Streaks Widget */}
-      <div className="grid grid-cols-3 gap-4 p-4 bg-slate-900/60 border border-slate-850 rounded-2xl">
-        <div className="flex items-center gap-3 px-2 justify-center border-r border-slate-800/80">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-900/60 border border-slate-850 rounded-2xl">
+        <div className="flex items-center gap-3 px-2 justify-center border-b sm:border-b-0 sm:border-r border-slate-800/80 pb-3 sm:pb-0">
           <div className="h-10 w-10 rounded-xl bg-orange-600/10 flex items-center justify-center text-orange-400">
             <Flame className="h-5 w-5 fill-current" />
           </div>
@@ -547,7 +547,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
             <div className="text-lg font-black text-slate-200">{streaks.workout} {streaks.workout === 1 ? 'day' : 'days'}</div>
           </div>
         </div>
-        <div className="flex items-center gap-3 px-2 justify-center border-r border-slate-800/80">
+        <div className="flex items-center gap-3 px-2 justify-center border-b sm:border-b-0 sm:border-r border-slate-800/80 pb-3 sm:pb-0">
           <div className="h-10 w-10 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-400">
             <Flame className="h-5 w-5 fill-current" />
           </div>
@@ -556,7 +556,7 @@ export default function Dashboard({ onStartWorkout, setActiveTab }) {
             <div className="text-lg font-black text-slate-200">{streaks.water} {streaks.water === 1 ? 'day' : 'days'}</div>
           </div>
         </div>
-        <div className="flex items-center gap-3 px-2 justify-center">
+        <div className="flex items-center gap-3 px-2 justify-center pt-1 sm:pt-0">
           <div className="h-10 w-10 rounded-xl bg-emerald-600/10 flex items-center justify-center text-emerald-400">
             <Flame className="h-5 w-5 fill-current" />
           </div>
