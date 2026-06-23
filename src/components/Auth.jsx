@@ -33,23 +33,48 @@ export default function Auth() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSignUp && step === 1) {
+      handleNextStep();
+      return;
+    }
+
     setError('');
     setLoading(true);
 
     try {
       if (isSignUp) {
         // Sign Up Flow
-        let finalWeight = parseFloat(weightKg);
-        let finalHeight = parseFloat(heightCm);
+        let finalWeight = 0;
+        let finalHeight = 0;
 
-        if (unitSystem === 'imperial') {
+        if (unitSystem === 'metric') {
+          finalWeight = parseFloat(weightKg);
+          finalHeight = parseFloat(heightCm);
+        } else {
           finalWeight = parseFloat(lbsToKg(weightLbs));
           finalHeight = ftInToCm(parseInt(heightFt), parseInt(heightIn));
         }
 
+        const parsedAge = parseInt(age);
+        if (isNaN(parsedAge) || parsedAge <= 0) {
+          setError('Please enter a valid age.');
+          setLoading(false);
+          return;
+        }
+        if (isNaN(finalWeight) || finalWeight <= 0) {
+          setError('Please enter a valid weight.');
+          setLoading(false);
+          return;
+        }
+        if (isNaN(finalHeight) || finalHeight <= 0) {
+          setError('Please enter a valid height.');
+          setLoading(false);
+          return;
+        }
+
         const metadata = {
           name,
-          age: parseInt(age),
+          age: parsedAge,
           gender,
           height_cm: finalHeight,
           weight_kg: finalWeight,
@@ -57,7 +82,7 @@ export default function Auth() {
           goal,
           injuries,
           unit_system: unitSystem,
-          water_goal_liters: unitSystem === 'metric' ? 3.0 : 3.0, // defaults
+          water_goal_liters: 3.0, // defaults
           protein_goal_grams: finalWeight * 1.0 > 80 ? Math.round(finalWeight * 1.2) : 80,
         };
 
@@ -80,6 +105,10 @@ export default function Auth() {
   const handleNextStep = () => {
     if (!email || !password || (isSignUp && !name)) {
       setError('Please fill in all account credentials.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password should be at least 6 characters.');
       return;
     }
     setError('');
@@ -212,6 +241,9 @@ export default function Auth() {
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Age (Years)</label>
                   <input
                     type="number"
+                    required
+                    min="1"
+                    max="120"
                     value={age}
                     onChange={(e) => setAge(e.target.value)}
                     placeholder="25"
@@ -239,6 +271,10 @@ export default function Auth() {
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Weight (kg)</label>
                       <input
                         type="number"
+                        required={unitSystem === 'metric'}
+                        min="20"
+                        max="300"
+                        step="0.1"
                         value={weightKg}
                         onChange={(e) => setWeightKg(e.target.value)}
                         placeholder="70"
@@ -249,6 +285,9 @@ export default function Auth() {
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Height (cm)</label>
                       <input
                         type="number"
+                        required={unitSystem === 'metric'}
+                        min="50"
+                        max="250"
                         value={heightCm}
                         onChange={(e) => setHeightCm(e.target.value)}
                         placeholder="170"
@@ -262,6 +301,10 @@ export default function Auth() {
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Weight (lbs)</label>
                       <input
                         type="number"
+                        required={unitSystem === 'imperial'}
+                        min="40"
+                        max="700"
+                        step="0.1"
                         value={weightLbs}
                         onChange={(e) => setWeightLbs(e.target.value)}
                         placeholder="150"
@@ -273,6 +316,9 @@ export default function Auth() {
                       <div className="flex gap-2">
                         <input
                           type="number"
+                          required={unitSystem === 'imperial'}
+                          min="2"
+                          max="8"
                           value={heightFt}
                           onChange={(e) => setHeightFt(e.target.value)}
                           placeholder="ft"
@@ -280,6 +326,9 @@ export default function Auth() {
                         />
                         <input
                           type="number"
+                          required={unitSystem === 'imperial'}
+                          min="0"
+                          max="11"
                           value={heightIn}
                           onChange={(e) => setHeightIn(e.target.value)}
                           placeholder="in"

@@ -120,20 +120,36 @@ create policy "Users can view their own workout logs" on public.workout_logs
 create policy "Users can insert their own workout logs" on public.workout_logs
   for insert with check (auth.uid() = user_id);
 
--- 6. Trigger for profile creation on user signup
--- (Automatically adds profile row when a user signs up via email/Google)
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, name, height_cm, weight_kg, unit_system, water_goal_liters, protein_goal_grams)
+  insert into public.profiles (
+    id, 
+    name, 
+    age,
+    gender,
+    height_cm, 
+    weight_kg, 
+    activity_level,
+    goal,
+    injuries,
+    unit_system, 
+    water_goal_liters, 
+    protein_goal_grams
+  )
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'name', 'User'),
-    173, -- default fallback height (e.g. your height 173cm)
-    84,  -- default fallback weight (e.g. your weight 84kg)
-    'metric',
-    3.0,
-    80
+    coalesce((new.raw_user_meta_data->>'age')::integer, 25),
+    coalesce(new.raw_user_meta_data->>'gender', 'male'),
+    coalesce((new.raw_user_meta_data->>'height_cm')::numeric, 170),
+    coalesce((new.raw_user_meta_data->>'weight_kg')::numeric, 70),
+    coalesce(new.raw_user_meta_data->>'activity_level', 'moderate'),
+    coalesce(new.raw_user_meta_data->>'goal', 'General Health'),
+    coalesce(new.raw_user_meta_data->>'injuries', 'None'),
+    coalesce(new.raw_user_meta_data->>'unit_system', 'metric'),
+    coalesce((new.raw_user_meta_data->>'water_goal_liters')::numeric, 3.0),
+    coalesce((new.raw_user_meta_data->>'protein_goal_grams')::numeric, 80)
   );
   return new;
 end;
