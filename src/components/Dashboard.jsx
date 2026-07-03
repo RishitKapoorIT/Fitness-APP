@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../supabaseClient';
+import { triggerHaptic } from '../utils/haptics';
 import {
   calculateBMI,
   getBMICategory,
@@ -372,6 +373,7 @@ export default function Dashboard({ onStartWorkout }) {
   // Handle Recovery Check-In
   const handleRecoverySubmit = async (e) => {
     e.preventDefault();
+    triggerHaptic('success');
     const slp = parseFloat(sleepHours) || 8;
     const sorn = parseInt(soreness) || 0;
     const nrg = parseInt(energy) || 4;
@@ -422,6 +424,11 @@ export default function Dashboard({ onStartWorkout }) {
 
   // Handle Water Logging
   const addWater = async (amountLiters) => {
+    if (amountLiters > 0) {
+      triggerHaptic('medium');
+    } else {
+      triggerHaptic('warning');
+    }
     const newAmt = Math.max(0, parseFloat((todayWater + amountLiters).toFixed(2)));
     
     const logPayload = {
@@ -448,6 +455,7 @@ export default function Dashboard({ onStartWorkout }) {
   // Handle Weight Logging
   const handleWeightSubmit = async (e) => {
     e.preventDefault();
+    triggerHaptic('success');
     const wt = parseFloat(newWeight);
     if (!wt || wt <= 0) return;
 

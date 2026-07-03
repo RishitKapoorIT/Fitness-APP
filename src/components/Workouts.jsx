@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../supabaseClient';
+import { triggerHaptic } from '../utils/haptics';
 
 import { BASE_DAYS_PLAN, BADGE_THEMES, getAdaptiveDayPlan } from '../utils/workoutPlanner';
 import { Play, CheckCircle, AlertCircle, Info, Heart, ArrowRight, Minimize2, Maximize2, Calendar } from 'lucide-react';
@@ -61,6 +62,9 @@ export default function Workouts({ setActiveTab }) {
   }, [user]);
 
   const playBeep = () => {
+    // Haptic feedback
+    triggerHaptic('success');
+
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -105,6 +109,9 @@ export default function Workouts({ setActiveTab }) {
               }
               return 0;
             }
+            if (prev - 1 <= 3 && prev - 1 > 0) {
+              triggerHaptic('countdown');
+            }
             return prev - 1;
           });
         } else {
@@ -131,6 +138,7 @@ export default function Workouts({ setActiveTab }) {
   }, [dayIdx, profile, recoveryScore]);
 
   const startWorkoutSession = (steps) => {
+    triggerHaptic('success');
     setActivePlayerSteps(steps);
     setCurrentPlayerStepIdx(0);
     setPlayerRunning(true);
@@ -145,6 +153,7 @@ export default function Workouts({ setActiveTab }) {
   };
 
   const handleFinishWorkout = async () => {
+    triggerHaptic('success');
     if (!user) return;
     const todayStr = new Date().toISOString().split('T')[0];
     
@@ -182,6 +191,7 @@ export default function Workouts({ setActiveTab }) {
   };
 
   const handleNextStep = () => {
+    triggerHaptic('light');
     if (!activePlayerSteps) return;
     if (currentPlayerStepIdx < activePlayerSteps.length - 1) {
       const nextIdx = currentPlayerStepIdx + 1;
@@ -192,6 +202,7 @@ export default function Workouts({ setActiveTab }) {
   };
 
   const handlePrevStep = () => {
+    triggerHaptic('light');
     if (!activePlayerSteps) return;
     if (currentPlayerStepIdx > 0) {
       const prevIdx = currentPlayerStepIdx - 1;
@@ -539,8 +550,12 @@ function TimerModal({ ex, onClose }) {
           setRemainSec((r) => {
             if (r <= 1) {
               clearInterval(timerRef.current);
+              triggerHaptic('success');
               handleWorkEnd();
               return 0;
+            }
+            if (r - 1 <= 3 && r - 1 > 0) {
+              triggerHaptic('countdown');
             }
             return r - 1;
           });
@@ -553,12 +568,16 @@ function TimerModal({ ex, onClose }) {
         setRestSec((r) => {
           if (r <= 1) {
             clearInterval(timerRef.current);
+            triggerHaptic('success');
             setSetNum((s) => s + 1);
             setRemainSec(ex.timerSec || 0);
             setElapsedSec(0);
             setRestSec(55);
             setPhase('work');
             return 55;
+          }
+          if (r - 1 <= 3 && r - 1 > 0) {
+            triggerHaptic('countdown');
           }
           return r - 1;
         });
@@ -578,6 +597,7 @@ function TimerModal({ ex, onClose }) {
   };
 
   const skipRest = () => {
+    if (navigator.vibrate) navigator.vibrate(10);
     setSetNum((s) => s + 1);
     setRemainSec(ex.timerSec || 0);
     setElapsedSec(0);

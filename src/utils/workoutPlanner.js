@@ -1,4 +1,33 @@
-// Static base plan from original workout-chart.jsx
+/**
+ * @typedef {Object} WorkoutExercise
+ * @property {string} name - Name of the exercise
+ * @property {string} sets - Display string for sets (e.g. "3", "7x")
+ * @property {string} reps - Display string for repetitions or duration
+ * @property {number|null} timerSec - Duration in seconds for timers, if applicable
+ * @property {number} totalSets - Numerical value of sets for calculation
+ * @property {string} note - Coaching cues or adaptation notes
+ * @property {boolean} [isInterval] - Whether it's an interval-based exercise
+ * @property {boolean} [highImpact] - Whether the exercise is high-impact (e.g. running)
+ */
+
+/**
+ * @typedef {Object} WorkoutDay
+ * @property {string} day - Short day code (e.g. "MON")
+ * @property {string} label - Full day name
+ * @property {string} type - Workout category (Cardio, Strength, Recovery, etc.)
+ * @property {string} color - Theme color key
+ * @property {string} focus - Primary goal for the session
+ * @property {string} duration - Estimated time commitment
+ * @property {Array<{name: string, detail: string, timerSec: number}>} warmup - List of warmup movements
+ * @property {WorkoutExercise[]} exercises - List of main movements
+ * @property {string[]} stretches - List of post-workout stretches
+ */
+
+/**
+ * Static base plan defining the default 7-day workout routine.
+ * Used as the template for the adaptive engine.
+ * @type {WorkoutDay[]}
+ */
 export const BASE_DAYS_PLAN = [
   {
     day: "MON", label: "Monday", type: "Cardio", color: "blue",
@@ -83,6 +112,11 @@ export const BASE_DAYS_PLAN = [
   },
 ];
 
+/**
+ * UI theme configurations for workout type badges.
+ * Maps workout types to Tailwind CSS utility classes for background, text, and borders.
+ * @type {Object.<string, {bg: string, text: string, border: string}>}
+ */
 export const BADGE_THEMES = {
   Cardio: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
   Strength: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20' },
@@ -91,7 +125,23 @@ export const BADGE_THEMES = {
   Rest: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/20' },
 };
 
-// ADAPTIVE WORKOUT GENERATION ENGINE (Pure Utility)
+/**
+ * ADAPTIVE WORKOUT GENERATION ENGINE
+ *
+ * Takes a static base plan and applies modifications based on the user's
+ * physical profile (injuries) and physiological recovery state (recovery score).
+ *
+ * Logic flow:
+ * 1. Deep copies the base plan to avoid side effects.
+ * 2. Modifies exercises based on reported injuries (e.g., knee pain -> quarter squats).
+ * 3. Adjusts volume (sets) based on recovery score (40-75% score = reduced volume).
+ * 4. Converts to rest/recovery day if recovery score is very low (< 40).
+ *
+ * @param {WorkoutDay} baseDay - The template workout object for the day.
+ * @param {Object} profile - User profile data containing 'injuries'.
+ * @param {number|null} recoveryScore - 0-100 score indicating readiness to train.
+ * @returns {WorkoutDay} The customized workout plan.
+ */
 export const getAdaptiveDayPlan = (baseDay, profile, recoveryScore) => {
   let dayCopy = JSON.parse(JSON.stringify(baseDay)); // Deep copy to prevent modifying static data
   
