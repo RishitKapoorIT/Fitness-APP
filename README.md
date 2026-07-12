@@ -66,11 +66,36 @@ Create a `.env` file in the root folder (or rename `.env.example`):
 ```env
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-VITE_GEMINI_API_KEY=your-google-ai-studio-api-key
 ```
+
+> **The Gemini API key is NOT a frontend variable.** The AI Coach calls a Supabase
+> Edge Function (`coach-chat`) that talks to Gemini using a server-side secret, so
+> the key never ships to the browser. See step 3b to configure it.
 
 ### 3. Initialize the Database
 Import the SQL script in `supabase_schema.sql` into the **Supabase SQL Editor** and execute it to set up the profile tables, recovery logger schemas, and auth registration listener triggers.
+
+### 3b. Deploy the AI Coach Edge Function
+The AI Coach will not respond until the `coach-chat` Edge Function is deployed **and** the Gemini API key is set as a Supabase secret:
+```bash
+# Log in and link your project (one-time)
+supabase login
+supabase link --project-ref your-project-id
+
+# Set the Gemini API key (server-side secret, NOT a VITE_ variable)
+supabase secrets set GEMINI_API_KEY=your-google-ai-studio-api-key
+
+# (Optional) pin/override the model — defaults to gemini-2.0-flash
+supabase secrets set GEMINI_MODEL=gemini-2.0-flash
+
+# Deploy the function
+supabase functions deploy coach-chat
+```
+
+> **Note on models:** `gemini-1.5-flash` is deprecated and now returns
+> `404 ... not found for API version v1beta`. This project defaults to
+> `gemini-2.0-flash`; use any current model from
+> [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models).
 
 ### 4. Install Dependencies & Launch
 ```bash

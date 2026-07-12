@@ -258,12 +258,14 @@ export default function Dashboard({ onStartWorkout }) {
           .eq('date', todayStr)
           .maybeSingle();
 
-        const { data: wtData } = await supabase
+        const { data: wtDataDesc } = await supabase
           .from('weight_logs')
           .select('*')
           .eq('user_id', user.id)
-          .order('date', { ascending: true })
+          .order('date', { ascending: false })
           .limit(10);
+        // Fetch the 10 most recent entries (desc), then restore chronological order for the chart.
+        const wtData = wtDataDesc ? [...wtDataDesc].reverse() : wtDataDesc;
 
         const { data: recList } = await supabase
           .from('recovery_logs')
