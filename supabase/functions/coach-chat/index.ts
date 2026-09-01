@@ -16,7 +16,9 @@ Deno.serve(async (req: Request) => {
     const { contents, systemPrompt } = await req.json();
 
     // Retrieve API key from environment secrets
-    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    const rawApiKey = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = rawApiKey ? rawApiKey.trim() : null;
+
     if (!apiKey) {
       console.error('GEMINI_API_KEY is not set');
       return new Response(
@@ -32,9 +34,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Call Google Gemini API
+    // Call Google Gemini API (using official model name gemini-1.5-flash)
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
