@@ -1,6 +1,7 @@
+/// <reference types="@types/deno" />
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const corsHeaders = {
+export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
@@ -13,21 +14,27 @@ Deno.serve(async (req: Request) => {
 
   try {
     const { contents, systemPrompt } = await req.json();
-    
+
     // Retrieve API key from environment secrets
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) {
+      console.error('GEMINI_API_KEY is not set');
       return new Response(
-        JSON.stringify({ error: { message: "GEMINI_API_KEY is not configured on Supabase. Run 'supabase secrets set GEMINI_API_KEY=...' to set it." } }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        JSON.stringify({
+          error: {
+            message: "GEMINI_API_KEY is not set in your Supabase project secrets."
+          }
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
+    // Call Google Gemini API
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -43,16 +50,33 @@ Deno.serve(async (req: Request) => {
     );
 
     const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Gemini API error status:', response.status, data);
+      return new Response(
+        JSON.stringify({
+          error: {
+            message: data?.error?.message || `Gemini API returned status ${response.status}`
+          }
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     return new Response(JSON.stringify(data), {
-      status: response.status,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error: any) {
+    console.error('Edge function exception:', error);
     return new Response(
-      JSON.stringify({ error: { message: error.message } }),
-      { 
-        status: 400, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      JSON.stringify({ error: { message: error.message || 'Internal Server Error' } }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
